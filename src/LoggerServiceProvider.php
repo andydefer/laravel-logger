@@ -45,7 +45,7 @@ class LoggerServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(LogSerializerService::class, function ($app) {
-            return new LogSerializerService;
+            return new LogSerializerService();
         });
 
         $this->app->singleton(LogCleanerService::class, function ($app) {
@@ -74,13 +74,18 @@ class LoggerServiceProvider extends ServiceProvider
             );
         });
 
-        // Logger singleton
-        $this->app->singleton(LoggerInterface::class, function ($app) {
+        // Enregistrer l'implémentation concrète Logger
+        $this->app->singleton(Logger::class, function ($app) {
             return new Logger(
                 $app->make(WriteLogTask::class),
                 $app->make(QueryLogsTask::class),
                 $app->make(StreamLogsTask::class),
             );
+        });
+
+        // Logger singleton via l'interface
+        $this->app->singleton(LoggerInterface::class, function ($app) {
+            return $app->make(Logger::class);
         });
 
         // 🔥 Enregistrer la directive LoggerCleanDirective (singleton uniquement)

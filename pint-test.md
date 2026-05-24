@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: dim. 24 mai 2026 17:15:17 WAT*
+*Generated: dim. 24 mai 2026 22:34:15 WAT*
 
 
   .........⨯....⨯⨯.⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯....⨯⨯
@@ -7,7 +7,7 @@
   ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── Laravel  
     FAIL   ................................................................................................................................................. 52 files, 23 style issues  
   ⨯ src/Directives/LoggerCleanDirective.php                                                       new_with_parentheses, not_operator_with_successor_space, blank_line_before_statement  
-  ⨯ src/LoggerServiceProvider.php                                                                                                                      concat_space, no_unused_imports  
+  ⨯ src/LoggerServiceProvider.php                                                                                                new_with_parentheses, concat_space, no_unused_imports  
   ⨯ src/Services/LogCleanerService.php                                 concat_space, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body  
   ⨯ src/Services/LogPathService.php                                                                             concat_space, unary_operator_spaces, not_operator_with_successor_space  
   ⨯ src/Services/LogSerializerService.php                                                                       concat_space, unary_operator_spaces, not_operator_with_successor_space  
