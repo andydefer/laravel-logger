@@ -15,7 +15,7 @@ use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Records\Collections\TypedCollection;
 use AndyDefer\Records\Recordable;
 
-final class Logger implements LoggerInterface
+class Logger implements LoggerInterface
 {
     private ?LogBufferService $buffer = null;
 
