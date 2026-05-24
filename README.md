@@ -1,6 +1,3 @@
-Voici le README mis à jour avec les directives :
-
-```markdown
 # Laravel Logger
 
 **Un package de logging structuré pour Laravel qui écrit les logs au format JSONL (JSON Lines).**
@@ -8,27 +5,6 @@ Voici le README mis à jour avec les directives :
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue)](https://php.net)
 [![Laravel Version](https://img.shields.io/badge/Laravel-12.x%20%7C%2013.x%20%7C%2014.x%20%7C%2015.x-blue)](https://laravel.com)
 [![License](https://img.shields.io/badge/Licence-MIT-green)](LICENSE)
-
----
-
-## Table des matières
-
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Premier log](#premier-log)
-- [Les 4 niveaux de log](#les-4-niveaux-de-log)
-- [Types acceptés dans un payload](#types-acceptés-dans-un-payload)
-- [Travailler avec le payload](#travailler-avec-le-payload)
-- [Rechercher des logs](#rechercher-des-logs)
-- [Buffer d'écriture](#buffer-décriture-performance)
-- [Exemples concrets](#exemples-concrets)
-- [Commandes avec la directive](#commandes-avec-la-directive)
-- [Tests unitaires](#tests-unitaires)
-- [LogLevel - méthodes utilitaires](#loglevel---méthodes-utilitaires)
-- [Bonnes pratiques](#bonnes-pratiques)
-- [Règle d'or](#règle-dor)
-- [Pourquoi ce package ?](#pourquoi-ce-package)
-- [Licence](#licence)
 
 ---
 
@@ -617,14 +593,3 @@ $logger->info(new LogDataRecord(type: 'auth', payload: $payload));
 
 MIT © [Andy Defer](https://github.com/andydefer)
 ```
-
-## Principaux changements dans le README
-
-| Section | Changement |
-|---------|------------|
-| **Table des matières** | Ajout de l'entrée "Commandes avec la directive" |
-| **Commandes avec la directive** | Nouvelle section remplaçant "Commandes Artisan" |
-| **Exemples** | Utilisation de `./vendor/bin/directive logger-clean` au lieu de `php artisan logger:clean` |
-| **Alias** | Ajout des alias `clean-logs` et `log-clean` |
-| **Exemple de sortie** | Ajout d'un exemple concret |
-| **Pourquoi ce package** | Ajout de l'avantage "Directive intégrée" |
