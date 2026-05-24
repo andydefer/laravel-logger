@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Enums;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Enums\LogLevel;
+use AndyDefer\Logger\Tests\UnitTestCase;
 
-final class LogLevelTest extends TestCase
+final class LogLevelTest extends UnitTestCase
 {
     public function test_values_returns_all_level_values(): void
     {

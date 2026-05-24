@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Services;
 
-use AndyDefer\BestPractices\Collections\TypedRecords;
 use AndyDefer\Logger\Config\LoggerConfig;
 use AndyDefer\Logger\Records\DateRangeRecord;
 use AndyDefer\Logger\Records\LogFileInfoRecord;
@@ -17,6 +16,16 @@ class LogPathService
     public function __construct(?LoggerConfig $config = null)
     {
         $this->config = $config ?? LoggerConfig::default();
+    }
+
+    public function getBasePath(): string
+    {
+        return $this->config->basePath;
+    }
+
+    public function getConfig(): LoggerConfig
+    {
+        return $this->config;
     }
 
     public function getHourlyFilePath(string $timestamp): string
@@ -61,14 +70,12 @@ class LogPathService
     {
         $dates = new TypedCollection('string');
 
-        // Si $from est null, utiliser la date d'aujourd'hui moins retentionDays
         if ($from === null) {
             $start = date('Y-m-d', strtotime('-' . $this->config->retentionDays . ' days'));
         } else {
             $start = substr($from, 0, 10);
         }
 
-        // Si $to est null, utiliser la date d'aujourd'hui
         if ($to === null) {
             $end = date('Y-m-d');
         } else {
@@ -78,7 +85,6 @@ class LogPathService
         $current = strtotime($start);
         $endTimestamp = strtotime($end);
 
-        // S'assurer que la date de début n'est pas après la date de fin
         if ($current > $endTimestamp) {
             return $dates;
         }
@@ -94,8 +100,6 @@ class LogPathService
     public function getDateRangeWithInfo(?string $from, ?string $to): DateRangeRecord
     {
         $dates = $this->getDateRange($from, $to);
-
-        // La logique de validation est ici, dans le Service
         $dates->assertAllOfType('string');
 
         $start = $dates->firstItem() ?? '';
@@ -106,11 +110,6 @@ class LogPathService
             end: $end,
             dates: $dates,
         );
-    }
-
-    public function getConfig(): LoggerConfig
-    {
-        return $this->config;
     }
 
     public function listAllLogFiles(): TypedCollection
@@ -150,7 +149,6 @@ class LogPathService
             }
         }
 
-        // Supprimer les dossiers vides
         $dateDirs = glob($this->config->basePath . '/*', GLOB_ONLYDIR);
         foreach ($dateDirs as $datePath) {
             if (count(glob($datePath . '/*.jsonl')) === 0) {

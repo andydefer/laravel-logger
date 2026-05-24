@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Feature;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Config\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
@@ -19,9 +18,10 @@ use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserRole;
 use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserStatus;
 use AndyDefer\Logger\Tests\Fixtures\Records\TestUserRecord;
+use AndyDefer\Logger\Tests\UnitTestCase;
 use AndyDefer\Records\Collections\Utility\StringTypedCollection;
 
-final class LoggerIntegrationTest extends TestCase
+final class LoggerIntegrationTest extends UnitTestCase
 {
     private Logger $logger;
 
@@ -65,14 +65,6 @@ final class LoggerIntegrationTest extends TestCase
         }
 
         return new LogDataRecord(type: $type, payload: $payload);
-    }
-
-    private function getDateRange(): array
-    {
-        return [
-            'from' => $this->fixedDate . 'T00:00:00Z',
-            'to' => $this->fixedDate . 'T23:59:59Z',
-        ];
     }
 
     // ==================== TESTS ====================

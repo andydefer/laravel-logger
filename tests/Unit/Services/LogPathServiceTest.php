@@ -2,31 +2,23 @@
 
 declare(strict_types=1);
 
-namespace AndyDefer\BestPractices\Tests\Logger\Unit\Services;
+namespace AndyDefer\Logger\Tests\Unit\Services;
 
-use AndyDefer\BestPractices\Collections\TypedRecords;
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Config\LoggerConfig;
-use AndyDefer\Logger\Logger;
 use AndyDefer\Logger\Services\LogPathService;
+use AndyDefer\Logger\Tests\UnitTestCase;
 use AndyDefer\Records\Collections\TypedCollection;
 
-final class LogPathServiceTest extends TestCase
+final class LogPathServiceTest extends UnitTestCase
 {
     private LogPathService $service;
-
-    private Logger $logger;
-
     private string $testBasePath;
-
     private string $currentDate;
 
     protected function setUp(): void
     {
-
         parent::setUp();
         $this->currentDate = date('Y-m-d');
-        $this->logger = app(Logger::class);
         $this->testBasePath = '/tmp/test_logs_' . uniqid();
         $config = new LoggerConfig($this->testBasePath, 30);
         $this->service = new LogPathService($config);
@@ -38,6 +30,11 @@ final class LogPathServiceTest extends TestCase
             $this->deleteDirectory($this->testBasePath);
         }
         parent::tearDown();
+    }
+
+    public function test_getBasePath_returns_configured_path(): void
+    {
+        $this->assertSame($this->testBasePath, $this->service->getBasePath());
     }
 
     public function test_get_hourly_file_path_returns_correct_path_for_midnight(): void
@@ -81,7 +78,6 @@ final class LogPathServiceTest extends TestCase
         $dates = $this->service->getDateRange($this->currentDate . 'T00:00:00Z', $this->currentDate . 'T23:59:59Z');
 
         $this->assertInstanceOf(TypedCollection::class, $dates);
-        // toArray() retourne un array, pas all()
         $this->assertSame([$this->currentDate], $dates->toArray());
     }
 
@@ -99,18 +95,14 @@ final class LogPathServiceTest extends TestCase
 
     public function test_get_date_range_uses_retention_days_when_from_is_null(): void
     {
-        // Utiliser une date de fin qui est dans le futur par rapport à la date de début calculée
         $futureDate = date('Y-m-d', strtotime('+60 days'));
         $dates = $this->service->getDateRange(null, $futureDate . 'T23:59:59Z');
 
         $this->assertInstanceOf(TypedCollection::class, $dates);
         $this->assertNotEmpty($dates->toArray());
 
-        // Vérifier que la première date correspond à aujourd'hui - 30 jours
         $expectedStartDate = date('Y-m-d', strtotime('-30 days'));
         $this->assertSame($expectedStartDate, $dates->firstItem());
-
-        // Vérifier que la dernière date est la date de fin
         $this->assertSame($futureDate, $dates->lastItem());
     }
 
@@ -128,16 +120,14 @@ final class LogPathServiceTest extends TestCase
 
     public function test_get_date_range_returns_empty_collection_when_start_after_end(): void
     {
-        // Utiliser une date de fin antérieure à la date de début calculée
         $pastDate = date('Y-m-d', strtotime('-60 days'));
-
         $dates = $this->service->getDateRange(null, $pastDate . 'T23:59:59Z');
 
         $this->assertInstanceOf(TypedCollection::class, $dates);
         $this->assertEmpty($dates->toArray());
     }
 
-    public function test_get_day_files_returns_empty_typed_records_when_directory_does_not_exist(): void
+    public function test_get_day_files_returns_empty_collection_when_directory_does_not_exist(): void
     {
         $files = $this->service->getDayFiles($this->currentDate);
 
@@ -153,13 +143,19 @@ final class LogPathServiceTest extends TestCase
         $this->assertSame($this->testBasePath, $config->basePath);
     }
 
+    public function test_listAllLogFiles_returns_empty_when_directory_does_not_exist(): void
+    {
+        $files = $this->service->listAllLogFiles();
+
+        $this->assertInstanceOf(TypedCollection::class, $files);
+        $this->assertEmpty($files->toArray());
+    }
+
     public function test_get_date_range_with_fixed_future_date(): void
     {
-        // Utiliser une date future pour tester sans dépendre de la date actuelle
         $dates = $this->service->getDateRange('2026-04-01T00:00:00Z', '2026-04-05T23:59:59Z');
 
         $this->assertInstanceOf(TypedCollection::class, $dates);
-        // toArray() retourne un array
         $this->assertSame(['2026-04-01', '2026-04-02', '2026-04-03', '2026-04-04', '2026-04-05'], $dates->toArray());
     }
 

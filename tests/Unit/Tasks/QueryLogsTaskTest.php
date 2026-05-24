@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Tasks;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Config\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
@@ -15,8 +14,9 @@ use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\Tests\UnitTestCase;
 
-final class QueryLogsTaskTest extends TestCase
+final class QueryLogsTaskTest extends UnitTestCase
 {
     private QueryLogsTask $queryTask;
 

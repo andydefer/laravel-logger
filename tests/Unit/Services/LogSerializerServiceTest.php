@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Services;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogRecord;
 use AndyDefer\Logger\Services\LogSerializerService;
+use AndyDefer\Logger\Tests\UnitTestCase;
 
-final class LogSerializerServiceTest extends TestCase
+final class LogSerializerServiceTest extends UnitTestCase
 {
     private LogSerializerService $serializer;
 

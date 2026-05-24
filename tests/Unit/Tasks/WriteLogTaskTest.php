@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Tasks;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Config\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
@@ -13,15 +12,15 @@ use AndyDefer\Logger\Records\LogRecord;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\Tests\UnitTestCase;
 use ErrorException;
+use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use RuntimeException;
 
-final class WriteLogTaskTest extends TestCase
+final class WriteLogTaskTest extends UnitTestCase
 {
     private WriteLogTask $task;
-
     private string $testLogPath;
-
     private LogSerializerService $serializer;
 
     protected function setUp(): void
@@ -29,9 +28,14 @@ final class WriteLogTaskTest extends TestCase
         parent::setUp();
 
         $this->testLogPath = sys_get_temp_dir() . '/test_logs_' . uniqid();
+
+        if (!is_dir($this->testLogPath)) {
+            mkdir($this->testLogPath, 0777, true);
+        }
+
         $config = new LoggerConfig($this->testLogPath, 30);
         $pathService = new LogPathService($config);
-        $this->serializer = new LogSerializerService;
+        $this->serializer = new LogSerializerService();
         $this->task = new WriteLogTask($pathService, $this->serializer);
     }
 
@@ -45,7 +49,7 @@ final class WriteLogTaskTest extends TestCase
 
     private function createLogRecord(string $time, LogLevel $level, string $type, array $payloadData): LogRecord
     {
-        $payload = new MixedPayloadCollection;
+        $payload = new MixedPayloadCollection();
         foreach ($payloadData as $item) {
             $payload->add($item);
         }
@@ -137,11 +141,8 @@ final class WriteLogTaskTest extends TestCase
     {
         $currentDate = date('Y-m-d');
 
-        $payload = new MixedPayloadCollection;
-        $payload->add('order_created');
-        $payload->add(12345);
-        $payload->add(79.98);
-        $payload->add(true);
+        $payload = new MixedPayloadCollection();
+        $payload->add('order_created', 12345, 79.98, true);
 
         $logData = new LogDataRecord(type: 'order_created', payload: $payload);
 
@@ -162,9 +163,12 @@ final class WriteLogTaskTest extends TestCase
         $this->assertContains(79.98, $decoded['data']['payload']);
     }
 
+    #[WithoutErrorHandler]
     public function test_execute_throws_exception_when_write_fails(): void
     {
-        $invalidPath = '/root/invalid/path/' . uniqid() . '/logs';
+        $invalidPath = sys_get_temp_dir() . '/invalid_path_' . uniqid();
+        touch($invalidPath);
+
         $config = new LoggerConfig($invalidPath, 30);
         $pathService = new LogPathService($config);
         $task = new WriteLogTask($pathService, $this->serializer);
@@ -182,16 +186,20 @@ final class WriteLogTaskTest extends TestCase
             $task->execute($record);
         } catch (RuntimeException | ErrorException $e) {
             $thrown = true;
+        } finally {
+            if (file_exists($invalidPath)) {
+                unlink($invalidPath);
+            }
         }
 
         $this->assertTrue($thrown, 'Expected RuntimeException or ErrorException was not thrown');
     }
 
+    #[WithoutErrorHandler]
     public function test_execute_throws_exception_when_file_not_writable(): void
     {
-        // Créer un dossier avec permission en lecture seule
         $readOnlyPath = sys_get_temp_dir() . '/readonly_' . uniqid();
-        mkdir($readOnlyPath, 0555); // Lecture seule (sans écriture)
+        mkdir($readOnlyPath, 0555);
 
         $config = new LoggerConfig($readOnlyPath, 30);
         $pathService = new LogPathService($config);
@@ -211,7 +219,6 @@ final class WriteLogTaskTest extends TestCase
         } catch (RuntimeException | ErrorException $e) {
             $thrown = true;
         } finally {
-            // Restaurer la permission pour nettoyer
             chmod($readOnlyPath, 0755);
             rmdir($readOnlyPath);
         }
@@ -248,10 +255,17 @@ final class WriteLogTaskTest extends TestCase
             return;
         }
 
+        chmod($dir, 0777);
+
         $files = array_diff(scandir($dir), ['.', '..']);
         foreach ($files as $file) {
             $path = $dir . '/' . $file;
-            is_dir($path) ? $this->deleteDirectory($path) : unlink($path);
+            if (is_dir($path)) {
+                $this->deleteDirectory($path);
+            } else {
+                chmod($path, 0777);
+                unlink($path);
+            }
         }
         rmdir($dir);
     }

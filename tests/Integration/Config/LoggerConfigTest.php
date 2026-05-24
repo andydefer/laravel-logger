@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\Logger\Unit\Config;
+namespace AndyDefer\Logger\Tests\Integration\Config;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\Logger\Tests\IntegrationTestCase;
 
-final class LoggerConfigTest extends TestCase
+final class LoggerConfigTest extends IntegrationTestCase
 {
     public function test_default_returns_config_with_default_values(): void
     {
@@ -19,7 +19,7 @@ final class LoggerConfigTest extends TestCase
 
     public function test_with_base_path_returns_new_config_with_updated_base_path(): void
     {
-        $original = LoggerConfig::default();
+        $original = new LoggerConfig('/default/path', 30);
         $newPath = '/custom/log/path';
 
         $updated = $original->withBasePath($newPath);
@@ -31,7 +31,7 @@ final class LoggerConfigTest extends TestCase
 
     public function test_with_retention_days_returns_new_config_with_updated_retention_days(): void
     {
-        $original = LoggerConfig::default();
+        $original = new LoggerConfig('/default/path', 30);
         $newRetentionDays = 60;
 
         $updated = $original->withRetentionDays($newRetentionDays);
@@ -43,7 +43,7 @@ final class LoggerConfigTest extends TestCase
 
     public function test_chained_configuration_creates_correct_config(): void
     {
-        $config = LoggerConfig::default()
+        $config = (new LoggerConfig('/default/path', 30))
             ->withBasePath('/custom/path')
             ->withRetentionDays(90);
 

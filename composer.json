@@ -1,6 +1,6 @@
 {
     "name": "andydefer/laravel-logger",
-    "description": "A structured logging package for Laravel that writes logs in JSONL format (JSON Lines). Each log entry is a valid JSON object on its own line, making it easy to parse, stream, and analyze.",
+    "description": "A structured logging package for Laravel that writes logs in JSONL format (JSON Lines).",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -12,7 +12,8 @@
     "require": {
         "php": ">=8.1",
         "laravel/framework": "^12.0|^13.0|^14.0|^15.0",
-        "andydefer/php-records": "^1.0"
+        "andydefer/php-records": "^1.0",
+        "andydefer/laravel-directive": "^6.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
@@ -45,7 +46,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "AndyDefer\\Directive\\DirectiveServiceProvider"
+                "AndyDefer\\Logger\\LoggerServiceProvider"
             ]
         }
     }

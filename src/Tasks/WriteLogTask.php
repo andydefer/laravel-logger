@@ -22,14 +22,14 @@ class WriteLogTask
 
         $directory = dirname($filePath);
         if (! is_dir($directory)) {
-            if (! mkdir($directory, 0755, true)) {
+
+            if (! @mkdir($directory, 0755, true)) {
                 throw new RuntimeException("Cannot create log directory: {$directory}");
             }
         }
 
         $jsonLine = $this->serializer->serialize($record);
 
-        // Écriture avec verrouillage pour concurrence
         $handle = fopen($filePath, 'a');
         if ($handle === false) {
             throw new RuntimeException("Cannot open log file: {$filePath}");

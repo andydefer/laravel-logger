@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Services;
 
-use AndyDefer\BestPractices\Collections\TypedRecords;
+use AndyDefer\Logger\Records\LogStatsRecord;
 use AndyDefer\Records\Collections\TypedCollection;
 
-final class LogCleanerService
+class LogCleanerService
 {
     public function __construct(
         private readonly LogPathService $pathService,
@@ -31,10 +31,23 @@ final class LogCleanerService
             }
         }
 
-        // Supprimer les dossiers vides
         $this->removeEmptyDirectories();
 
         return $deletedCount;
+    }
+
+    public function countFilesToDelete(string $cutoffDate): int
+    {
+        $count = 0;
+        $allFiles = $this->pathService->listAllLogFiles();
+
+        foreach ($allFiles as $fileInfo) {
+            if ($fileInfo->date < $cutoffDate) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     private function removeEmptyDirectories(): void
@@ -53,7 +66,7 @@ final class LogCleanerService
         }
     }
 
-    public function getStats(): array
+    public function getStats(): LogStatsRecord
     {
         $allFiles = $this->pathService->listAllLogFiles();
 
@@ -67,15 +80,15 @@ final class LogCleanerService
             $dates[$fileInfo->date] = true;
         }
 
-        return [
-            'total_files' => $allFiles->count(),
-            'total_days' => count($dates),
-            'total_size_bytes' => $totalSize,
-            'total_size_mb' => round($totalSize / 1024 / 1024, 2),
-            'total_lines' => $totalLines,
-            'oldest_date' => $allFiles->firstItem()?->date ?? null,
-            'newest_date' => $allFiles->lastItem()?->date ?? null,
-        ];
+        return new LogStatsRecord(
+            totalFiles: $allFiles->count(),
+            totalDays: count($dates),
+            totalSizeBytes: $totalSize,
+            totalSizeMb: round($totalSize / 1024 / 1024, 2),
+            totalLines: $totalLines,
+            oldestDate: $allFiles->firstItem()?->date ?? null,
+            newestDate: $allFiles->lastItem()?->date ?? null,
+        );
     }
 
     public function getFilesByDate(string $date): TypedCollection

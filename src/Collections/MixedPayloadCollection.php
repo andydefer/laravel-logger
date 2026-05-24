@@ -82,32 +82,4 @@ final class MixedPayloadCollection extends TypedCollection
 
         return $stdClassCount === $this->count();
     }
-
-    /**
-     * Converts all items to a serializable array structure.
-     *
-     * This method recursively transforms:
-     * - AbstractRecord instances to arrays (via toArray())
-     * - TypedCollection instances to arrays (via toArray())
-     * - stdClass instances to associative arrays
-     * - Scalar values are kept as-is
-     *
-     * The result is suitable for JSON serialization in log outputs.
-     *
-     * @return array<int, mixed> Serializable representation of all items
-     */
-    public function toSerializableArray(): array
-    {
-        $result = [];
-        foreach ($this->items as $item) {
-            $result[] = match (true) {
-                $item instanceof AbstractRecord => $item->toArray(),
-                $item instanceof TypedCollection => $item->toArray(),
-                $item instanceof stdClass => (array) $item,
-                default => $item,
-            };
-        }
-
-        return $result;
-    }
 }

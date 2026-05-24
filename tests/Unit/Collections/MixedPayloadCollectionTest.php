@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Collections;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Tests\Fixtures\Records\TestProductRecord;
 use AndyDefer\Logger\Tests\Fixtures\Records\TestUserRecord;
+use AndyDefer\Logger\Tests\UnitTestCase;
 use AndyDefer\Records\AbstractRecord;
 use AndyDefer\Records\Collections\TypedCollection;
 
-final class MixedPayloadCollectionTest extends TestCase
+final class MixedPayloadCollectionTest extends UnitTestCase
 {
     public function test_construct_creates_collection_with_correct_types(): void
     {
@@ -92,35 +92,6 @@ final class MixedPayloadCollectionTest extends TestCase
         $this->assertFalse($collection->isAllRecords());
     }
 
-    public function test_to_serializable_array_converts_records_to_arrays(): void
-    {
-        $collection = new MixedPayloadCollection();
-
-        $testRecord = new TestUserRecord(name: 'Test User', email: 'test@example.com');
-
-        $collection->add(1, 'hello', $testRecord);
-
-        $serialized = $collection->toSerializableArray();
-
-        $this->assertSame(1, $serialized[0]);
-        $this->assertSame('hello', $serialized[1]);
-        $this->assertSame('Test User', $serialized[2]['name']);
-        $this->assertSame('test@example.com', $serialized[2]['email']);
-    }
-
-    public function test_to_serializable_array_handles_nested_typed_records(): void
-    {
-        $collection = new MixedPayloadCollection();
-
-        $nestedCollection = new TypedCollection('int');
-        $nestedCollection->add(1, 2, 3);
-
-        $collection->add($nestedCollection);
-
-        $serialized = $collection->toSerializableArray();
-
-        $this->assertSame([1, 2, 3], $serialized[0]);
-    }
 
     public function test_is_all_scalars_returns_true_when_only_scalars(): void
     {

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Tasks;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Config\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
@@ -14,8 +13,9 @@ use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\Tests\UnitTestCase;
 
-final class StreamLogsTaskTest extends TestCase
+final class StreamLogsTaskTest extends UnitTestCase
 {
     private StreamLogsTask $streamTask;
 

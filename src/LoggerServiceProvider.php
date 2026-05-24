@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger;
 
+use AndyDefer\Directive\Contracts\DirectiveRegistrarInterface;
 use AndyDefer\Logger\Commands\LoggerCleanCommand;
 use AndyDefer\Logger\Config\LoggerConfig;
 use AndyDefer\Logger\Contracts\LoggerInterface;
-use AndyDefer\Logger\Logger;
+use AndyDefer\Logger\Directives\LoggerCleanDirective;
 use AndyDefer\Logger\Services\LogCleanerService;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Records\Collections\Utility\StringTypedCollection;
 use Illuminate\Support\ServiceProvider;
 
 class LoggerServiceProvider extends ServiceProvider
@@ -73,13 +75,34 @@ class LoggerServiceProvider extends ServiceProvider
             );
         });
 
-        // Logger principal
+        // Logger singleton
         $this->app->singleton(LoggerInterface::class, function ($app) {
             return new Logger(
                 $app->make(WriteLogTask::class),
                 $app->make(QueryLogsTask::class),
                 $app->make(StreamLogsTask::class),
             );
+        });
+
+        // 🔥 Enregistrer la directive LoggerCleanDirective
+        $this->registerDirective();
+    }
+
+    private function registerDirective(): void
+    {
+        // Enregistrer la directive comme singleton
+        $this->app->singleton(LoggerCleanDirective::class, function ($app) {
+            return new LoggerCleanDirective(
+                $app->make(LogCleanerService::class),
+                $app->make(LogPathService::class),
+            );
+        });
+
+        // Enregistrer dans le DirectiveRegistrar si disponible
+        $this->app->afterResolving(DirectiveRegistrarInterface::class, function ($registrar) {
+            $classes = new StringTypedCollection();
+            $classes->add(LoggerCleanDirective::class);
+            $registrar->register($classes);
         });
     }
 
@@ -88,12 +111,6 @@ class LoggerServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../../config/logger.php' => config_path('logger.php'),
         ], 'logger-config');
-
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                LoggerCleanCommand::class,
-            ]);
-        }
 
         // Nettoyage automatique à la fin de la requête
         $this->app->terminating(function () {

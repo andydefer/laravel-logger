@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Services;
 
-use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Config\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
@@ -14,8 +13,9 @@ use AndyDefer\Logger\Services\LogBufferService;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\Tests\UnitTestCase;
 
-final class LogBufferServiceTest extends TestCase
+final class LogBufferServiceTest extends UnitTestCase
 {
     private LogBufferService $buffer;
 

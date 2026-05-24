@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit;
 
-use AndyDefer\BestPractices\Collections\TypedRecords;
 use AndyDefer\Logger\Tests\TestCase;
 use AndyDefer\Logger\Collections\MixedPayloadCollection;
 use AndyDefer\Logger\Enums\LogLevel;
@@ -15,12 +14,13 @@ use AndyDefer\Logger\Records\LogRecord;
 use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\Tests\UnitTestCase;
 use AndyDefer\Records\Collections\TypedCollection;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 
 #[AllowMockObjectsWithoutExpectations]
-final class LoggerTest extends TestCase
+final class LoggerTest extends UnitTestCase
 {
     private Logger $logger;
 
@@ -56,14 +56,6 @@ final class LoggerTest extends TestCase
             type: $type,
             payload: $payload,
         );
-    }
-
-    private function getDateRange(): array
-    {
-        return [
-            'from' => '2024-01-01T00:00:00Z',
-            'to' => '2024-01-01T23:59:59Z',
-        ];
     }
 
     public function test_info_creates_info_level_log_record(): void

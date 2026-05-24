@@ -1,3 +1,6 @@
+Voici le README mis à jour avec les directives :
+
+```markdown
 # Laravel Logger
 
 **Un package de logging structuré pour Laravel qui écrit les logs au format JSONL (JSON Lines).**
@@ -5,6 +8,27 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue)](https://php.net)
 [![Laravel Version](https://img.shields.io/badge/Laravel-12.x%20%7C%2013.x%20%7C%2014.x%20%7C%2015.x-blue)](https://laravel.com)
 [![License](https://img.shields.io/badge/Licence-MIT-green)](LICENSE)
+
+---
+
+## Table des matières
+
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Premier log](#premier-log)
+- [Les 4 niveaux de log](#les-4-niveaux-de-log)
+- [Types acceptés dans un payload](#types-acceptés-dans-un-payload)
+- [Travailler avec le payload](#travailler-avec-le-payload)
+- [Rechercher des logs](#rechercher-des-logs)
+- [Buffer d'écriture](#buffer-décriture-performance)
+- [Exemples concrets](#exemples-concrets)
+- [Commandes avec la directive](#commandes-avec-la-directive)
+- [Tests unitaires](#tests-unitaires)
+- [LogLevel - méthodes utilitaires](#loglevel---méthodes-utilitaires)
+- [Bonnes pratiques](#bonnes-pratiques)
+- [Règle d'or](#règle-dor)
+- [Pourquoi ce package ?](#pourquoi-ce-package)
+- [Licence](#licence)
 
 ---
 
@@ -350,22 +374,59 @@ $logger->info(new LogDataRecord(type: 'api', payload: $payload));
 
 ---
 
-## Commandes Artisan
+## Commandes avec la directive
+
+Le package intègre une directive pour nettoyer les vieux logs.
 
 ### Nettoyer les vieux logs
 
 ```bash
 # Nettoyer les logs de plus de 30 jours (valeur par défaut)
-php artisan logger:clean
+./vendor/bin/directive logger-clean
 
 # Nettoyer les logs de plus de 60 jours
-php artisan logger:clean --days=60
+./vendor/bin/directive logger-clean --days=60
 
 # Simulation (ne supprime rien)
-php artisan logger:clean --dry-run
+./vendor/bin/directive logger-clean --dry-run
 
 # Mode verbeux (affiche les fichiers à supprimer)
-php artisan logger:clean --verbose
+./vendor/bin/directive logger-clean --verbose
+
+# Avec alias
+./vendor/bin/directive clean-logs
+./vendor/bin/directive log-clean
+
+# Toutes les options combinées
+./vendor/bin/directive logger-clean --days=90 --dry-run --verbose
+```
+
+### Exemple de sortie
+
+```bash
+$ ./vendor/bin/directive logger-clean --dry-run --verbose
+
+Current statistics:
+  Files: 45
+  Size: 12.5 MB
+  Lines: 15230
+  Range: 2024-01-01 to 2024-01-31
+  Path: storage/logs/directives
+
+Files to delete:
+  - 2024-01-01/00 (1024 bytes)
+  - 2024-01-01/01 (2048 bytes)
+  - 2024-01-02/00 (512 bytes)
+
+⚠️ Dry run mode - no files will be deleted
+Would delete files older than 2024-01-01
+Would delete 15 file(s)
+```
+
+### Lister toutes les directives disponibles
+
+```bash
+./vendor/bin/directive --list
 ```
 
 ---
@@ -535,6 +596,7 @@ $logger->expects($this->once())
 | **Séparation claire** | `type` = événement, `payload` = données |
 | **Performance** | Buffer d'écriture, organisation par heure |
 | **Maintenance automatique** | Nettoyage des vieux logs configurable |
+| **Directive intégrée** | Nettoyage via CLI sans dépendre d'Artisan |
 
 ### Exemple comparatif
 
@@ -554,3 +616,15 @@ $logger->info(new LogDataRecord(type: 'auth', payload: $payload));
 ## Licence
 
 MIT © [Andy Defer](https://github.com/andydefer)
+```
+
+## Principaux changements dans le README
+
+| Section | Changement |
+|---------|------------|
+| **Table des matières** | Ajout de l'entrée "Commandes avec la directive" |
+| **Commandes avec la directive** | Nouvelle section remplaçant "Commandes Artisan" |
+| **Exemples** | Utilisation de `./vendor/bin/directive logger-clean` au lieu de `php artisan logger:clean` |
+| **Alias** | Ajout des alias `clean-logs` et `log-clean` |
+| **Exemple de sortie** | Ajout d'un exemple concret |
+| **Pourquoi ce package** | Ajout de l'avantage "Directive intégrée" |
