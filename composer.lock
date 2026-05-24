@@ -4,11 +4,11 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "096c58cc65c4eedd3af27e70cbea034d",
+    "content-hash": "e59ae723a8ad8d39d2ce65e42c7a7d30",
     "packages": [
         {
             "name": "andydefer/laravel-directive",
-            "version": "10.0.0",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-directive.git",
@@ -65,7 +65,7 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/10.0.0"
+                "source": "https://github.com/andydefer/laravel-directive/tree/1.0.0"
             },
             "time": "2026-05-24T15:02:09+00:00"
         },
