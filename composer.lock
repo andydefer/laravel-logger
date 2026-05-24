@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4cb97e3785f29e34b73ae4951763f24d",
+    "content-hash": "bc0d6c867c5333d1a47a70bd54146135",
     "packages": [
         {
             "name": "andydefer/laravel-directive",
-            "version": "7.0.0",
+            "version": "8.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-directive.git",
-                "reference": "5280bf4397fe288aef5034bf94e95867b5364e35"
+                "reference": "a0f54d903daa6b90ea17110560e0637069d97892"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/5280bf4397fe288aef5034bf94e95867b5364e35",
-                "reference": "5280bf4397fe288aef5034bf94e95867b5364e35",
+                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/a0f54d903daa6b90ea17110560e0637069d97892",
+                "reference": "a0f54d903daa6b90ea17110560e0637069d97892",
                 "shasum": ""
             },
             "require": {
@@ -65,9 +65,9 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/7.0.0"
+                "source": "https://github.com/andydefer/laravel-directive/tree/8.0.0"
             },
-            "time": "2026-05-24T12:36:34+00:00"
+            "time": "2026-05-24T13:54:05+00:00"
         },
         {
             "name": "andydefer/php-records",
