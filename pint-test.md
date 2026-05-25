@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: dim. 24 mai 2026 23:14:41 WAT*
+*Generated: lun. 25 mai 2026 16:05:28 WAT*
 
 
   .........⨯....⨯⨯.⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯....⨯⨯
@@ -11,8 +11,8 @@
   ⨯ src/Services/LogCleanerService.php                                 concat_space, unary_operator_spaces, braces_position, not_operator_with_successor_space, single_line_empty_body  
   ⨯ src/Services/LogPathService.php                                                                             concat_space, unary_operator_spaces, not_operator_with_successor_space  
   ⨯ src/Services/LogSerializerService.php                                                                       concat_space, unary_operator_spaces, not_operator_with_successor_space  
-  ⨯ tests/Feature/LoggerBufferIntegrationTest.php                                              concat_space, unary_operator_spaces, not_operator_with_successor_space, ordered_imports  
-  ⨯ tests/Feature/LoggerCleanerIntegrationTest.php                                             concat_space, unary_operator_spaces, not_operator_with_successor_space, ordered_imports  
+  ⨯ tests/Feature/LoggerBufferIntegrationTest.php                                                               concat_space, unary_operator_spaces, not_operator_with_successor_space  
+  ⨯ tests/Feature/LoggerCleanerIntegrationTest.php                                                              concat_space, unary_operator_spaces, not_operator_with_successor_space  
   ⨯ tests/Feature/LoggerIntegrationTest.php                                               new_with_parentheses, concat_space, unary_operator_spaces, not_operator_with_successor_space  
   ⨯ tests/Fixtures/Records/TestCollectionsRecord.php                                                                          braces_position, single_line_empty_body, ordered_imports  
   ⨯ tests/Fixtures/Records/TestFullUserRecord.php                                                                             braces_position, single_line_empty_body, ordered_imports  

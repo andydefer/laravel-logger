@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e59ae723a8ad8d39d2ce65e42c7a7d30",
+    "content-hash": "36ce714f0574e19aea0fd96ac7d2240b",
     "packages": [
         {
             "name": "andydefer/laravel-directive",
-            "version": "1.0.0",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-directive.git",
-                "reference": "4c431aa889ce8a359d7094d5172084bb71435c57"
+                "reference": "b58c92478bb4bc8ea9580f4b4f470d2aa07fb5af"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/4c431aa889ce8a359d7094d5172084bb71435c57",
-                "reference": "4c431aa889ce8a359d7094d5172084bb71435c57",
+                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/b58c92478bb4bc8ea9580f4b4f470d2aa07fb5af",
+                "reference": "b58c92478bb4bc8ea9580f4b4f470d2aa07fb5af",
                 "shasum": ""
             },
             "require": {
@@ -65,9 +65,9 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/1.0.0"
+                "source": "https://github.com/andydefer/laravel-directive/tree/2.0.0"
             },
-            "time": "2026-05-24T15:02:09+00:00"
+            "time": "2026-05-25T15:02:08+00:00"
         },
         {
             "name": "andydefer/php-records",
