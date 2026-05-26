@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: lun. 25 mai 2026 16:05:28 WAT*
+*Generated: mar. 26 mai 2026 09:12:14 WAT*
 
 
   .........⨯....⨯⨯.⨯..⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯..⨯....⨯⨯....⨯⨯
@@ -20,7 +20,7 @@
   ⨯ tests/IntegrationTestCase.php                                                                                                                                    no_unused_imports  
   ⨯ tests/TestCase.php                                                                                                                               no_trailing_whitespace_in_comment  
   ⨯ tests/Unit/Collections/MixedPayloadCollectionTest.php                                                                            class_attributes_separation, new_with_parentheses  
-  ⨯ tests/Unit/Directives/LoggerCleanDirectiveTest.php                                         class_attributes_separation, new_with_parentheses, concat_space, php_unit_method_casing  
+  ⨯ tests/Unit/Directives/LoggerCleanDirectiveTest.php                   class_attributes_separation, new_with_parentheses, concat_space, trailing_comma_in_multiline, ordered_imports  
   ⨯ tests/Unit/LoggerTest.php                                                                                                                                        no_unused_imports  
   ⨯ tests/Unit/Services/LogBufferServiceTest.php                                                                concat_space, unary_operator_spaces, not_operator_with_successor_space  
   ⨯ tests/Unit/Services/LogCleanerServiceTest.php class_attributes_separation, new_with_parentheses, concat_space, php_unit_method_casing, unary_operator_spaces, not_operator_with_s…  

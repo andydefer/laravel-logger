@@ -12,7 +12,7 @@ use AndyDefer\Logger\Services\LogCleanerService;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Records\Collections\Utility\StringTypedCollection;
 
-class LoggerCleanDirective extends AbstractDirective  // ← plus de "final"
+class LoggerCleanDirective extends AbstractDirective
 {
     public function __construct(
         DirectiveInteractionService $interaction,

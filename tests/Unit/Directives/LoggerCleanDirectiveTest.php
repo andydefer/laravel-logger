@@ -7,6 +7,7 @@ namespace AndyDefer\Logger\Tests\Unit\Directives;
 use AndyDefer\Directive\Collections\ParameterCollection;
 use AndyDefer\Directive\Enums\ExitCode;
 use AndyDefer\Directive\Records\ParameterRecord;
+use AndyDefer\Directive\Testing\InteractsWithDirectives;
 use AndyDefer\Directive\Services\DirectiveInteractionService;
 use AndyDefer\Directive\Services\LaravelBootstrapper;
 use AndyDefer\Logger\Directives\LoggerCleanDirective;
@@ -22,6 +23,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 #[AllowMockObjectsWithoutExpectations]
 final class LoggerCleanDirectiveTest extends UnitTestCase
 {
+    use InteractsWithDirectives;
+
     private LogCleanerService&MockObject $cleaner;
     private LogPathService&MockObject $pathService;
     private DirectiveInteractionService&MockObject $interaction;
@@ -31,6 +34,8 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->initDirectiveTesting(bootLaravel: true);
 
         $this->cleaner = $this->createMock(LogCleanerService::class);
         $this->pathService = $this->createMock(LogPathService::class);
@@ -43,9 +48,17 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
             $this->pathService,
             $this->bootstrapper,
         );
+
+        $this->registerDirective($this->directive);
     }
 
-    public function test_getSignature_returns_correct_signature(): void
+    protected function tearDown(): void
+    {
+        $this->destroyDirectiveTesting();
+        parent::tearDown();
+    }
+
+    public function test_get_signature_returns_correct_signature(): void
     {
         $signature = $this->directive->getSignature();
 
@@ -55,14 +68,14 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
         $this->assertStringContainsString('--verbose', $signature);
     }
 
-    public function test_getDescription_returns_correct_description(): void
+    public function test_get_description_returns_correct_description(): void
     {
         $description = $this->directive->getDescription();
 
         $this->assertStringContainsString('Remove old log files', $description);
     }
 
-    public function test_getAliases_returns_correct_aliases(): void
+    public function test_get_aliases_returns_correct_aliases(): void
     {
         $aliases = $this->directive->getAliases();
 
@@ -72,7 +85,7 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
         $this->assertSame(2, $aliases->count());
     }
 
-    public function test_shouldBootLaravel_returns_true(): void
+    public function test_should_boot_laravel_returns_true(): void
     {
         $this->assertTrue($this->directive->shouldBootLaravel());
     }
@@ -108,11 +121,13 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
 
     public function test_execute_with_dry_run_does_not_delete_files(): void
     {
-        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
+        $this->directive->setOptions(
+            new ParameterCollection([
+                new ParameterRecord(name: 'dry-run', value: true)
+            ])
+        );
 
-        $options = new ParameterCollection();
-        $options->add(new ParameterRecord(name: 'dry-run', value: true));
-        $this->directive->setOptions($options);
+        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
 
         $this->pathService->expects($this->once())
             ->method('getBasePath')
@@ -136,12 +151,12 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
 
     public function test_execute_with_verbose_displays_files_to_delete(): void
     {
-        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
-        $filesCollection = $this->createMockFileCollection(3);
-
         $options = new ParameterCollection();
         $options->add(new ParameterRecord(name: 'verbose', value: true));
         $this->directive->setOptions($options);
+
+        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
+        $filesCollection = $this->createMockFileCollection(3);
 
         $this->pathService->expects($this->once())
             ->method('getBasePath')
@@ -166,17 +181,18 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
 
     public function test_execute_with_custom_days_passes_correct_cutoff_date(): void
     {
-        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
+        $this->directive->setOptions(
+            new ParameterCollection([
+                new ParameterRecord(name: 'days', value: '60')
+            ])
+        );
 
-        $options = new ParameterCollection();
-        $options->add(new ParameterRecord(name: 'days', value: '60'));
-        $this->directive->setOptions($options);
+        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
 
         $this->pathService->expects($this->once())
             ->method('getBasePath')
             ->willReturn('/test/logs');
 
-        // ⚠️ getStats est appelé 2 fois (displayCurrentStatistics + displayNewStatistics)
         $this->cleaner->expects($this->exactly(2))
             ->method('getStats')
             ->willReturn($stats);
@@ -247,6 +263,169 @@ final class LoggerCleanDirectiveTest extends UnitTestCase
 
         $this->cleaner->expects($this->never())
             ->method('cleanWithCutoff');
+
+        $result = $this->directive->execute();
+
+        $this->assertSame(ExitCode::SUCCESS, $result);
+    }
+
+    public function test_execute_with_dry_run_and_verbose_shows_files_without_deleting(): void
+    {
+        $options = new ParameterCollection();
+        $options->add(new ParameterRecord(name: 'dry-run', value: true));
+        $options->add(new ParameterRecord(name: 'verbose', value: true));
+        $this->directive->setOptions($options);
+
+        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
+        $filesCollection = $this->createMockFileCollection(3);
+
+        $this->pathService->expects($this->once())
+            ->method('getBasePath')
+            ->willReturn('/test/logs');
+
+        $this->cleaner->expects($this->once())
+            ->method('getStats')
+            ->willReturn($stats);
+
+        $this->cleaner->expects($this->once())
+            ->method('getFilesByDate')
+            ->willReturn($filesCollection);
+
+        $this->cleaner->expects($this->once())
+            ->method('countFilesToDelete')
+            ->willReturn(5);
+
+        $this->cleaner->expects($this->never())
+            ->method('cleanWithCutoff');
+
+        $result = $this->directive->execute();
+
+        $this->assertSame(ExitCode::SUCCESS, $result);
+    }
+
+    public function test_execute_with_negative_days_uses_default(): void
+    {
+        $this->directive->setOptions(
+            new ParameterCollection([
+                new ParameterRecord(name: 'days', value: '-10')
+            ])
+        );
+
+        $stats = $this->createMockStatsRecord(5, 2.0, 500, '2024-01-01', '2024-01-31');
+
+        $this->pathService->expects($this->once())
+            ->method('getBasePath')
+            ->willReturn('/test/logs');
+
+        $this->cleaner->expects($this->exactly(2))
+            ->method('getStats')
+            ->willReturn($stats);
+
+        $this->cleaner->expects($this->once())
+            ->method('countFilesToDelete')
+            ->willReturn(3);
+
+        $this->cleaner->expects($this->once())
+            ->method('cleanWithCutoff')
+            ->willReturn(3);
+
+        $this->interaction->expects($this->atLeastOnce())
+            ->method('confirm')
+            ->willReturn(true);
+
+        $result = $this->directive->execute();
+
+        $this->assertSame(ExitCode::SUCCESS, $result);
+    }
+
+    public function test_execute_with_non_numeric_days_uses_default(): void
+    {
+        $this->directive->setOptions(
+            new ParameterCollection([
+                new ParameterRecord(name: 'days', value: 'abc')
+            ])
+        );
+
+        $stats = $this->createMockStatsRecord(5, 2.0, 500, '2024-01-01', '2024-01-31');
+
+        $this->pathService->expects($this->once())
+            ->method('getBasePath')
+            ->willReturn('/test/logs');
+
+        $this->cleaner->expects($this->exactly(2))
+            ->method('getStats')
+            ->willReturn($stats);
+
+        $this->cleaner->expects($this->once())
+            ->method('countFilesToDelete')
+            ->willReturn(3);
+
+        $this->cleaner->expects($this->once())
+            ->method('cleanWithCutoff')
+            ->willReturn(3);
+
+        $this->interaction->expects($this->atLeastOnce())
+            ->method('confirm')
+            ->willReturn(true);
+
+        $result = $this->directive->execute();
+
+        $this->assertSame(ExitCode::SUCCESS, $result);
+    }
+
+    public function test_execute_when_cleaner_returns_zero_deleted_files_after_confirmation(): void
+    {
+        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
+
+        $this->pathService->expects($this->once())
+            ->method('getBasePath')
+            ->willReturn('/test/logs');
+
+        $this->cleaner->expects($this->exactly(2))
+            ->method('getStats')
+            ->willReturn($stats);
+
+        $this->cleaner->expects($this->once())
+            ->method('countFilesToDelete')
+            ->willReturn(5);
+
+        $this->interaction->expects($this->atLeastOnce())
+            ->method('confirm')
+            ->willReturn(true);
+
+        $this->cleaner->expects($this->once())
+            ->method('cleanWithCutoff')
+            ->willReturn(0);
+
+        $result = $this->directive->execute();
+
+        $this->assertSame(ExitCode::SUCCESS, $result);
+    }
+
+    public function test_execute_with_verbose_and_no_files_shows_none(): void
+    {
+        $options = new ParameterCollection();
+        $options->add(new ParameterRecord(name: 'verbose', value: true));
+        $this->directive->setOptions($options);
+
+        $stats = $this->createMockStatsRecord(10, 5.2, 1500, '2024-01-01', '2024-01-31');
+        $emptyCollection = new TypedCollection(\stdClass::class);
+
+        $this->pathService->expects($this->once())
+            ->method('getBasePath')
+            ->willReturn('/test/logs');
+
+        $this->cleaner->expects($this->once())
+            ->method('getStats')
+            ->willReturn($stats);
+
+        $this->cleaner->expects($this->once())
+            ->method('getFilesByDate')
+            ->willReturn($emptyCollection);
+
+        $this->cleaner->expects($this->once())
+            ->method('countFilesToDelete')
+            ->willReturn(5);
 
         $result = $this->directive->execute();
 
