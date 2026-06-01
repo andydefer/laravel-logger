@@ -13,25 +13,33 @@ use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\UnitTestCase;
+use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 use ErrorException;
 use PHPUnit\Framework\Attributes\WithoutErrorHandler;
 use RuntimeException;
 
+/**
+ * Test suite for WriteLogTask.
+ *
+ * Validates log file writing, directory creation, file appending,
+ * hour-based file bucketing, and error handling.
+ *
+ * @author Andy Defer
+ */
 final class WriteLogTaskTest extends UnitTestCase
 {
     private WriteLogTask $task;
-
     private string $testLogPath;
-
     private LogSerializerService $serializer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        // Arrange: Create isolated test environment
         $this->testLogPath = sys_get_temp_dir() . '/test_logs_' . uniqid();
 
-        if (! is_dir($this->testLogPath)) {
+        if (!is_dir($this->testLogPath)) {
             mkdir($this->testLogPath, 0777, true);
         }
 
@@ -43,29 +51,35 @@ final class WriteLogTaskTest extends UnitTestCase
 
     protected function tearDown(): void
     {
+        // Clean up temporary test files
         if (is_dir($this->testLogPath)) {
             $this->deleteDirectory($this->testLogPath);
         }
         parent::tearDown();
     }
 
+    /**
+     * Create a test log record with the given parameters.
+     */
     private function createLogRecord(string $time, LogLevel $level, string $type, array $payloadData): LogRecord
     {
         $payload = new StrictDataObject($payloadData);
-
         $logData = new LogDataRecord(type: $type, payload: $payload);
+        $isoTime = new IsoZuluTime($time);
 
         return new LogRecord(
-            time: $time,
+            time: $isoTime,
             level: $level,
             data: $logData,
         );
     }
 
+    // ==================== BASIC WRITE TESTS ====================
+
     public function test_execute_creates_directory_and_writes_log_entry(): void
     {
+        // Arrange
         $currentDate = date('Y-m-d');
-
         $record = $this->createLogRecord(
             time: $currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
@@ -76,8 +90,10 @@ final class WriteLogTaskTest extends UnitTestCase
             ],
         );
 
+        // Act
         $this->task->execute($record);
 
+        // Assert
         $filePath = $this->testLogPath . '/' . $currentDate . '/10-11.jsonl';
         $this->assertFileExists($filePath);
 
@@ -88,10 +104,12 @@ final class WriteLogTaskTest extends UnitTestCase
         $this->assertStringContainsString('"ip":"127.0.0.1"', $content);
     }
 
+    // ==================== APPEND TESTS ====================
+
     public function test_execute_appends_multiple_entries_to_same_hour_file(): void
     {
+        // Arrange
         $currentDate = date('Y-m-d');
-
         $record1 = $this->createLogRecord(
             time: $currentDate . 'T10:15:00Z',
             level: LogLevel::INFO,
@@ -106,20 +124,24 @@ final class WriteLogTaskTest extends UnitTestCase
             payloadData: ['value' => 2],
         );
 
+        // Act
         $this->task->execute($record1);
         $this->task->execute($record2);
 
+        // Assert
         $filePath = $this->testLogPath . '/' . $currentDate . '/10-11.jsonl';
         $content = file_get_contents($filePath);
-
         $lines = explode("\n", trim($content));
+
         $this->assertCount(2, $lines);
     }
 
+    // ==================== HOUR BUCKETING TESTS ====================
+
     public function test_execute_creates_different_files_for_different_hours(): void
     {
+        // Arrange
         $currentDate = date('Y-m-d');
-
         $record1 = $this->createLogRecord(
             time: $currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
@@ -134,15 +156,20 @@ final class WriteLogTaskTest extends UnitTestCase
             payloadData: ['value' => 2],
         );
 
+        // Act
         $this->task->execute($record1);
         $this->task->execute($record2);
 
+        // Assert
         $this->assertFileExists($this->testLogPath . '/' . $currentDate . '/10-11.jsonl');
         $this->assertFileExists($this->testLogPath . '/' . $currentDate . '/11-12.jsonl');
     }
 
+    // ==================== COMPLEX DATA TESTS ====================
+
     public function test_execute_handles_complex_data_structure(): void
     {
+        // Arrange
         $currentDate = date('Y-m-d');
 
         $payload = new StrictDataObject([
@@ -153,15 +180,13 @@ final class WriteLogTaskTest extends UnitTestCase
         ]);
 
         $logData = new LogDataRecord(type: 'order_created', payload: $payload);
+        $isoTime = new IsoZuluTime($currentDate . 'T10:26:00Z');
+        $record = new LogRecord(time: $isoTime, level: LogLevel::INFO, data: $logData);
 
-        $record = new LogRecord(
-            time: $currentDate . 'T10:26:00Z',
-            level: LogLevel::INFO,
-            data: $logData,
-        );
-
+        // Act
         $this->task->execute($record);
 
+        // Assert
         $filePath = $this->testLogPath . '/' . $currentDate . '/10-11.jsonl';
         $content = file_get_contents($filePath);
         $decoded = json_decode($content, true);
@@ -173,9 +198,43 @@ final class WriteLogTaskTest extends UnitTestCase
         $this->assertSame('order_created', $decoded['data']['payload']['event']);
     }
 
+    // ==================== SERIALIZATION TESTS ====================
+
+    public function test_execute_serializes_log_correctly(): void
+    {
+        // Arrange
+        $currentDate = date('Y-m-d');
+        $record = $this->createLogRecord(
+            time: $currentDate . 'T10:26:00Z',
+            level: LogLevel::INFO,
+            type: 'test_event',
+            payloadData: [
+                'number' => 42,
+                'text' => 'string_value',
+                'flag' => true,
+            ],
+        );
+
+        // Act
+        $this->task->execute($record);
+
+        // Assert
+        $filePath = $this->testLogPath . '/' . $currentDate . '/10-11.jsonl';
+        $content = file_get_contents($filePath);
+        $decoded = json_decode($content, true);
+
+        $this->assertSame('test_event', $decoded['data']['type']);
+        $this->assertSame(42, $decoded['data']['payload']['number']);
+        $this->assertSame('string_value', $decoded['data']['payload']['text']);
+        $this->assertTrue($decoded['data']['payload']['flag']);
+    }
+
+    // ==================== ERROR HANDLING TESTS ====================
+
     #[WithoutErrorHandler]
     public function test_execute_throws_exception_when_write_fails(): void
     {
+        // Arrange
         $invalidPath = sys_get_temp_dir() . '/invalid_path_' . uniqid();
         touch($invalidPath);
 
@@ -191,6 +250,7 @@ final class WriteLogTaskTest extends UnitTestCase
             payloadData: ['data' => 'value'],
         );
 
+        // Act & Assert
         $thrown = false;
         try {
             $task->execute($record);
@@ -208,6 +268,7 @@ final class WriteLogTaskTest extends UnitTestCase
     #[WithoutErrorHandler]
     public function test_execute_throws_exception_when_file_not_writable(): void
     {
+        // Arrange
         $readOnlyPath = sys_get_temp_dir() . '/readonly_' . uniqid();
         mkdir($readOnlyPath, 0555);
 
@@ -223,6 +284,7 @@ final class WriteLogTaskTest extends UnitTestCase
             payloadData: ['data' => 'value'],
         );
 
+        // Act & Assert
         $thrown = false;
         try {
             $task->execute($record);
@@ -236,36 +298,14 @@ final class WriteLogTaskTest extends UnitTestCase
         $this->assertTrue($thrown, 'Expected RuntimeException or ErrorException was not thrown');
     }
 
-    public function test_execute_serializes_log_correctly(): void
-    {
-        $currentDate = date('Y-m-d');
+    // ==================== HELPER METHODS ====================
 
-        $record = $this->createLogRecord(
-            time: $currentDate . 'T10:26:00Z',
-            level: LogLevel::INFO,
-            type: 'test_event',
-            payloadData: [
-                'number' => 42,
-                'text' => 'string_value',
-                'flag' => true,
-            ],
-        );
-
-        $this->task->execute($record);
-
-        $filePath = $this->testLogPath . '/' . $currentDate . '/10-11.jsonl';
-        $content = file_get_contents($filePath);
-        $decoded = json_decode($content, true);
-
-        $this->assertSame('test_event', $decoded['data']['type']);
-        $this->assertSame(42, $decoded['data']['payload']['number']);
-        $this->assertSame('string_value', $decoded['data']['payload']['text']);
-        $this->assertTrue($decoded['data']['payload']['flag']);
-    }
-
+    /**
+     * Recursively delete a directory and all its contents.
+     */
     private function deleteDirectory(string $dir): void
     {
-        if (! is_dir($dir)) {
+        if (!is_dir($dir)) {
             return;
         }
 

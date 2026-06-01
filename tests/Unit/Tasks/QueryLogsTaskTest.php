@@ -15,23 +15,28 @@ use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\UnitTestCase;
+use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 
+/**
+ * Test suite for QueryLogsTask.
+ *
+ * Validates filtering of log records by type, level, and date range.
+ *
+ * @author Andy Defer
+ */
 final class QueryLogsTaskTest extends UnitTestCase
 {
     private QueryLogsTask $queryTask;
-
     private WriteLogTask $writeTask;
-
     private string $testLogPath;
-
     private string $currentDate;
-
     private LogSerializerService $serializer;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        // Arrange: Create isolated test environment
         $this->currentDate = date('Y-m-d');
         $this->testLogPath = sys_get_temp_dir() . '/test_logs_' . uniqid();
         $config = new LoggerConfig($this->testLogPath, 30);
@@ -44,35 +49,45 @@ final class QueryLogsTaskTest extends UnitTestCase
 
     protected function tearDown(): void
     {
+        // Clean up temporary test files
         if (is_dir($this->testLogPath)) {
             $this->deleteDirectory($this->testLogPath);
         }
         parent::tearDown();
     }
 
+    /**
+     * Create a test log record with the given parameters.
+     */
     private function createLogRecord(string $time, LogLevel $level, string $type, array $payloadData): LogRecord
     {
         $payload = new StrictDataObject($payloadData);
-
         $logData = new LogDataRecord(type: $type, payload: $payload);
+        $isoTime = new IsoZuluTime($time);
 
         return new LogRecord(
-            time: $time,
+            time: $isoTime,
             level: $level,
             data: $logData,
         );
     }
 
+    /**
+     * Get the full day date range for the current date.
+     */
     private function getFullDayRange(): array
     {
         return [
-            'from' => $this->currentDate . 'T00:00:00Z',
-            'to' => $this->currentDate . 'T23:59:59Z',
+            'from' => new IsoZuluTime($this->currentDate . 'T00:00:00Z'),
+            'to' => new IsoZuluTime($this->currentDate . 'T23:59:59Z'),
         ];
     }
 
+    // ==================== NO FILTER TESTS ====================
+
     public function test_execute_returns_all_logs_when_no_filters(): void
     {
+        // Arrange
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
@@ -94,13 +109,19 @@ final class QueryLogsTaskTest extends UnitTestCase
             type: null,
             level: null,
         );
+
+        // Act
         $results = $this->queryTask->execute($query);
 
+        // Assert
         $this->assertSame(2, $results->count());
     }
 
+    // ==================== FILTER BY TYPE TESTS ====================
+
     public function test_execute_filters_by_type(): void
     {
+        // Arrange
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
@@ -129,8 +150,11 @@ final class QueryLogsTaskTest extends UnitTestCase
             type: 'user_login',
             level: null,
         );
+
+        // Act
         $results = $this->queryTask->execute($query);
 
+        // Assert
         $this->assertSame(2, $results->count());
 
         foreach ($results as $result) {
@@ -138,8 +162,11 @@ final class QueryLogsTaskTest extends UnitTestCase
         }
     }
 
+    // ==================== FILTER BY LEVEL TESTS ====================
+
     public function test_execute_filters_by_level(): void
     {
+        // Arrange
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
@@ -168,14 +195,20 @@ final class QueryLogsTaskTest extends UnitTestCase
             type: null,
             level: LogLevel::ERROR,
         );
+
+        // Act
         $results = $this->queryTask->execute($query);
 
+        // Assert
         $this->assertSame(1, $results->count());
         $this->assertSame('payment_failed', $results->first()->data->type);
     }
 
+    // ==================== FILTER BY DATE RANGE TESTS ====================
+
     public function test_execute_filters_by_date_range(): void
     {
+        // Arrange
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T09:26:00Z',
             level: LogLevel::INFO,
@@ -198,20 +231,25 @@ final class QueryLogsTaskTest extends UnitTestCase
         ));
 
         $query = new LogQueryRecord(
-            from: $this->currentDate . 'T10:00:00Z',
-            to: $this->currentDate . 'T10:59:59Z',
+            from: new IsoZuluTime($this->currentDate . 'T10:00:00Z'),
+            to: new IsoZuluTime($this->currentDate . 'T10:59:59Z'),
             type: null,
             level: null,
         );
 
+        // Act
         $results = $this->queryTask->execute($query);
 
+        // Assert
         $this->assertSame(1, $results->count());
-        $this->assertStringContainsString('10:26', $results->first()->time);
+        $this->assertStringContainsString('10:26', $results->first()->time->getValue());
     }
+
+    // ==================== COMBINED FILTERS TESTS ====================
 
     public function test_execute_combines_multiple_filters(): void
     {
+        // Arrange
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
@@ -240,13 +278,19 @@ final class QueryLogsTaskTest extends UnitTestCase
             type: 'user_login',
             level: LogLevel::INFO,
         );
+
+        // Act
         $results = $this->queryTask->execute($query);
 
+        // Assert
         $this->assertSame(2, $results->count());
     }
 
+    // ==================== NO MATCH TESTS ====================
+
     public function test_execute_returns_empty_collection_when_no_matches(): void
     {
+        // Arrange
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
@@ -261,21 +305,26 @@ final class QueryLogsTaskTest extends UnitTestCase
             type: 'nonexistent_type',
             level: null,
         );
+
+        // Act
         $results = $this->queryTask->execute($query);
 
+        // Assert
         $this->assertSame(0, $results->count());
         $this->assertTrue($results->isEmpty());
     }
 
+    // ==================== EDGE CASES TESTS ====================
+
     public function test_execute_handles_logs_without_type_field(): void
     {
-        // Créer un log sans type (ancien format simulé)
+        // Arrange - Create a log with unknown type
         $payload = new StrictDataObject(['message' => 'Simple log without type']);
-
         $logData = new LogDataRecord(type: 'unknown', payload: $payload);
+        $isoTime = new IsoZuluTime($this->currentDate . 'T10:26:00Z');
 
         $record = new LogRecord(
-            time: $this->currentDate . 'T10:26:00Z',
+            time: $isoTime,
             level: LogLevel::INFO,
             data: $logData,
         );
@@ -289,14 +338,17 @@ final class QueryLogsTaskTest extends UnitTestCase
             type: 'user_login',
             level: null,
         );
+
+        // Act
         $results = $this->queryTask->execute($query);
 
+        // Assert
         $this->assertSame(0, $results->count());
     }
 
     public function test_execute_handles_corrupted_json_lines_gracefully(): void
     {
-        // Créer un fichier avec une ligne JSON corrompue
+        // Arrange
         $testDate = $this->currentDate;
         $testDir = $this->testLogPath . '/' . $testDate;
         mkdir($testDir, 0755, true);
@@ -317,15 +369,22 @@ final class QueryLogsTaskTest extends UnitTestCase
             type: null,
             level: null,
         );
+
+        // Act
         $results = $this->queryTask->execute($query);
 
-        // La ligne corrompue doit être ignorée, seule la ligne valide est lue
+        // Assert
         $this->assertSame(1, $results->count());
     }
 
+    // ==================== HELPER METHODS ====================
+
+    /**
+     * Recursively delete a directory and all its contents.
+     */
     private function deleteDirectory(string $dir): void
     {
-        if (! is_dir($dir)) {
+        if (!is_dir($dir)) {
             return;
         }
 

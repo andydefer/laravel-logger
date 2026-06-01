@@ -6,18 +6,26 @@ namespace AndyDefer\Logger\Records;
 
 use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 use AndyDefer\Logger\Enums\LogLevel;
+use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 
+/**
+ * Query parameters for searching log records.
+ *
+ * Allows filtering by date range, event type, and log level.
+ *
+ * @author Andy Defer
+ */
 final class LogQueryRecord extends AbstractRecord
 {
     /**
-     * @param  string  $from  Date de début (ISO 8601 Zulu format, ex: 2026-04-05T00:00:00Z)
-     * @param  string  $to  Date de fin (ISO 8601 Zulu format, ex: 2026-04-05T23:59:59Z)
-     * @param  string|null  $type  Type d'événement (ex: 'user_login')
-     * @param  LogLevel|null  $level  Niveau de log (DEBUG, INFO, WARNING, ERROR)
+     * @param IsoZuluTime $from Start date (inclusive)
+     * @param IsoZuluTime $to End date (inclusive)
+     * @param string|null $type Event type (e.g., 'user_login')
+     * @param LogLevel|null $level Log severity level
      */
     public function __construct(
-        public readonly string $from,
-        public readonly string $to,
+        public readonly IsoZuluTime $from,
+        public readonly IsoZuluTime $to,
         public readonly ?string $type = null,
         public readonly ?LogLevel $level = null,
     ) {}
