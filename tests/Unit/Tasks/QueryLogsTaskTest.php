@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Tasks;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Utils\StrictDataObject;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogQueryRecord;
@@ -52,10 +52,7 @@ final class QueryLogsTaskTest extends UnitTestCase
 
     private function createLogRecord(string $time, LogLevel $level, string $type, array $payloadData): LogRecord
     {
-        $payload = new MixedPayloadCollection;
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new StrictDataObject($payloadData);
 
         $logData = new LogDataRecord(type: $type, payload: $payload);
 
@@ -80,14 +77,14 @@ final class QueryLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'user_login',
-            payloadData: [1],
+            payloadData: ['user_id' => 1],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T11:26:00Z',
             level: LogLevel::ERROR,
             type: 'payment_failed',
-            payloadData: [123],
+            payloadData: ['payment_id' => 123],
         ));
 
         $range = $this->getFullDayRange();
@@ -108,21 +105,21 @@ final class QueryLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'user_login',
-            payloadData: [1],
+            payloadData: ['user_id' => 1],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T11:26:00Z',
             level: LogLevel::INFO,
             type: 'user_login',
-            payloadData: [2],
+            payloadData: ['user_id' => 2],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T12:26:00Z',
             level: LogLevel::ERROR,
             type: 'payment_failed',
-            payloadData: [123],
+            payloadData: ['payment_id' => 123],
         ));
 
         $range = $this->getFullDayRange();
@@ -154,14 +151,14 @@ final class QueryLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T11:26:00Z',
             level: LogLevel::ERROR,
             type: 'payment_failed',
-            payloadData: [123],
+            payloadData: ['payment_id' => 123],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T12:26:00Z',
             level: LogLevel::WARNING,
             type: 'system_warning',
-            payloadData: ['high_memory'],
+            payloadData: ['reason' => 'high_memory'],
         ));
 
         $range = $this->getFullDayRange();
@@ -174,7 +171,7 @@ final class QueryLogsTaskTest extends UnitTestCase
         $results = $this->queryTask->execute($query);
 
         $this->assertSame(1, $results->count());
-        $this->assertSame('payment_failed', $results->firstItem()->data->type);
+        $this->assertSame('payment_failed', $results->first()->data->type);
     }
 
     public function test_execute_filters_by_date_range(): void
@@ -210,7 +207,7 @@ final class QueryLogsTaskTest extends UnitTestCase
         $results = $this->queryTask->execute($query);
 
         $this->assertSame(1, $results->count());
-        $this->assertStringContainsString('10:26', $results->firstItem()->time);
+        $this->assertStringContainsString('10:26', $results->first()->time);
     }
 
     public function test_execute_combines_multiple_filters(): void
@@ -219,21 +216,21 @@ final class QueryLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'user_login',
-            payloadData: [1],
+            payloadData: ['user_id' => 1],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'user_login',
-            payloadData: [2],
+            payloadData: ['user_id' => 2],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::ERROR,
             type: 'payment_failed',
-            payloadData: [123],
+            payloadData: ['payment_id' => 123],
         ));
 
         $range = $this->getFullDayRange();
@@ -254,7 +251,7 @@ final class QueryLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'user_login',
-            payloadData: [1],
+            payloadData: ['user_id' => 1],
         ));
 
         $range = $this->getFullDayRange();
@@ -273,8 +270,7 @@ final class QueryLogsTaskTest extends UnitTestCase
     public function test_execute_handles_logs_without_type_field(): void
     {
         // Créer un log sans type (ancien format simulé)
-        $payload = new MixedPayloadCollection;
-        $payload->add('Simple log without type');
+        $payload = new StrictDataObject(['message' => 'Simple log without type']);
 
         $logData = new LogDataRecord(type: 'unknown', payload: $payload);
 
@@ -311,7 +307,7 @@ final class QueryLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'valid_log',
-            payloadData: [42],
+            payloadData: ['value' => 42],
         )), FILE_APPEND);
 
         $range = $this->getFullDayRange();

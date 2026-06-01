@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Records;
 
-use AndyDefer\Records\AbstractRecord;
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 
 final class LogFileInfoRecord extends AbstractRecord
 {

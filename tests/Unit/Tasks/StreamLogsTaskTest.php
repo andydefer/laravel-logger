@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Tasks;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Utils\StrictDataObject;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogRecord;
@@ -51,10 +51,7 @@ final class StreamLogsTaskTest extends UnitTestCase
 
     private function createLogRecord(string $time, LogLevel $level, string $type, array $payloadData): LogRecord
     {
-        $payload = new MixedPayloadCollection;
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new StrictDataObject($payloadData);
 
         $logData = new LogDataRecord(type: $type, payload: $payload);
 
@@ -71,14 +68,14 @@ final class StreamLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [1],
+            payloadData: ['value' => 1],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T11:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [2],
+            payloadData: ['value' => 2],
         ));
 
         $futureDate = date('Y-m-d', strtotime('+1 day'));
@@ -86,7 +83,7 @@ final class StreamLogsTaskTest extends UnitTestCase
             time: $futureDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [3],
+            payloadData: ['value' => 3],
         ));
 
         $results = $this->streamTask->execute($this->currentDate);
@@ -100,7 +97,7 @@ final class StreamLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [1],
+            payloadData: ['value' => 1],
         ));
 
         $results = $this->streamTask->execute();
@@ -123,21 +120,21 @@ final class StreamLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [10],
+            payloadData: ['hour' => 10],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T11:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [11],
+            payloadData: ['hour' => 11],
         ));
 
         $this->writeTask->execute($this->createLogRecord(
             time: $this->currentDate . 'T23:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [23],
+            payloadData: ['hour' => 23],
         ));
 
         $results = $this->streamTask->execute($this->currentDate);
@@ -204,7 +201,7 @@ final class StreamLogsTaskTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'valid_log',
-            payloadData: [42],
+            payloadData: ['value' => 42],
         );
         file_put_contents($testFile, $this->serializer->serialize($validRecord), FILE_APPEND);
 
@@ -215,7 +212,7 @@ final class StreamLogsTaskTest extends UnitTestCase
 
         // Seule la ligne valide doit être retournée
         $this->assertSame(1, $results->count());
-        $this->assertSame('valid_log', $results->firstItem()->data->type);
+        $this->assertSame('valid_log', $results->first()->data->type);
     }
 
     private function deleteDirectory(string $dir): void

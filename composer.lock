@@ -4,24 +4,75 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2259f34d8fd53c7dc299f4344c37124c",
+    "content-hash": "2aa7b2d60cadc8d9baad1aec9a5ead7e",
     "packages": [
         {
-            "name": "andydefer/laravel-directive",
-            "version": "2.3.0",
+            "name": "andydefer/domain-structures",
+            "version": "1.13.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/andydefer/laravel-directive.git",
-                "reference": "543e6859daa0d4a86242f3e335102e5227da470e"
+                "url": "https://github.com/andydefer/domain-structures.git",
+                "reference": "c5f64360f70ebf9b92be1dee8afe5ea531c39e5a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/543e6859daa0d4a86242f3e335102e5227da470e",
-                "reference": "543e6859daa0d4a86242f3e335102e5227da470e",
+                "url": "https://api.github.com/repos/andydefer/domain-structures/zipball/c5f64360f70ebf9b92be1dee8afe5ea531c39e5a",
+                "reference": "c5f64360f70ebf9b92be1dee8afe5ea531c39e5a",
                 "shasum": ""
             },
             "require": {
-                "andydefer/php-records": "^1.0",
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "barryvdh/laravel-ide-helper": "^3.6",
+                "composer/composer": "^2.0",
+                "larastan/larastan": "^3.8",
+                "laravel/pint": "^1.26",
+                "orchestra/testbench": "^10.8",
+                "phpunit/phpunit": "^12.5",
+                "rector/rector": "*",
+                "symfony/var-dumper": "^7.0",
+                "vimeo/psalm": "^6.14"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "AndyDefer\\DomainStructures\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andy Defer",
+                    "email": "andykanidimbu@gmail.com"
+                }
+            ],
+            "description": "A complete domain structures package for PHP: Records, Value Objects, Data DTOs, and TypedCollections. Brings type safety and clean architecture to your application.",
+            "support": {
+                "issues": "https://github.com/andydefer/domain-structures/issues",
+                "source": "https://github.com/andydefer/domain-structures/tree/1.13.2"
+            },
+            "time": "2026-06-01T16:14:12+00:00"
+        },
+        {
+            "name": "andydefer/laravel-directive",
+            "version": "3.5.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/andydefer/laravel-directive.git",
+                "reference": "8ebf5d1ddbcd7d0531bf5273ce71b1898146f4e7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/8ebf5d1ddbcd7d0531bf5273ce71b1898146f4e7",
+                "reference": "8ebf5d1ddbcd7d0531bf5273ce71b1898146f4e7",
+                "shasum": ""
+            },
+            "require": {
+                "andydefer/domain-structures": "^1.13",
                 "laravel/framework": "^12.0|^13.0|^14.0|^15.0",
                 "php": ">=8.1"
             },
@@ -65,60 +116,9 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/2.3.0"
+                "source": "https://github.com/andydefer/laravel-directive/tree/3.5.2"
             },
-            "time": "2026-05-26T08:08:20+00:00"
-        },
-        {
-            "name": "andydefer/php-records",
-            "version": "1.1.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/andydefer/php-records.git",
-                "reference": "61422baa20f270bd2ce1cfd31fe3f0f60141a5f4"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/php-records/zipball/61422baa20f270bd2ce1cfd31fe3f0f60141a5f4",
-                "reference": "61422baa20f270bd2ce1cfd31fe3f0f60141a5f4",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.1"
-            },
-            "require-dev": {
-                "barryvdh/laravel-ide-helper": "^3.6",
-                "composer/composer": "^2.0",
-                "larastan/larastan": "^3.8",
-                "laravel/pint": "^1.26",
-                "orchestra/testbench": "^10.8",
-                "phpunit/phpunit": "^12.5",
-                "rector/rector": "*",
-                "symfony/var-dumper": "^7.0",
-                "vimeo/psalm": "^6.14"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "AndyDefer\\Records\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Andy Kani",
-                    "email": "andykanidimbu@gmail.com"
-                }
-            ],
-            "description": "A typed data structure package that brings type safety to internal application communication in PHP.",
-            "support": {
-                "issues": "https://github.com/andydefer/php-records/issues",
-                "source": "https://github.com/andydefer/php-records/tree/1.1.0"
-            },
-            "time": "2026-05-24T04:29:38+00:00"
+            "time": "2026-06-01T16:16:39+00:00"
         },
         {
             "name": "brick/math",

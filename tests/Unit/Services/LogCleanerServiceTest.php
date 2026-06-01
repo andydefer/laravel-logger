@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Unit\Services;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Utils\StrictDataObject;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogRecord;
@@ -15,14 +14,20 @@ use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\UnitTestCase;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 
 final class LogCleanerServiceTest extends UnitTestCase
 {
     private LogCleanerService $cleaner;
+
     private LogPathService $pathService;
+
     private WriteLogTask $writeTask;
+
     private LogSerializerService $serializer;
+
     private string $testLogPath;
+
     private string $currentDate;
 
     protected function setUp(): void
@@ -33,7 +38,7 @@ final class LogCleanerServiceTest extends UnitTestCase
         $this->testLogPath = sys_get_temp_dir() . '/cleaner_test_' . uniqid();
         $config = new LoggerConfig($this->testLogPath, 7);
         $this->pathService = new LogPathService($config);
-        $this->serializer = new LogSerializerService();
+        $this->serializer = new LogSerializerService;
         $this->writeTask = new WriteLogTask($this->pathService, $this->serializer);
         $this->cleaner = new LogCleanerService($this->pathService);
     }
@@ -50,8 +55,16 @@ final class LogCleanerServiceTest extends UnitTestCase
     {
         $timestamp = $date . 'T' . $hour . ':00:00Z';
 
-        $payload = new MixedPayloadCollection();
-        $payload->add('test', 'data', 'with', 'multiple', 'items', 123, true, null);
+        $payload = new StrictDataObject([
+            'key1' => 'test',
+            'key2' => 'data',
+            'key3' => 'with',
+            'key4' => 'multiple',
+            'key5' => 'items',
+            'number' => 123,
+            'active' => true,
+            'optional' => null,
+        ]);
 
         $logData = new LogDataRecord(
             type: 'test',
@@ -94,7 +107,7 @@ final class LogCleanerServiceTest extends UnitTestCase
         $this->assertGreaterThan(0, $stats->totalFiles);
     }
 
-    public function test_countFilesToDelete_returns_correct_count(): void
+    public function test_count_files_to_delete_returns_correct_count(): void
     {
         $oldDate = '2020-01-01';
         $this->writeTestLog($oldDate, '10');
@@ -106,7 +119,7 @@ final class LogCleanerServiceTest extends UnitTestCase
         $this->assertSame(2, $count);
     }
 
-    public function test_countFilesToDelete_returns_zero_when_no_old_files(): void
+    public function test_count_files_to_delete_returns_zero_when_no_old_files(): void
     {
         $this->writeTestLog($this->currentDate, '10');
 

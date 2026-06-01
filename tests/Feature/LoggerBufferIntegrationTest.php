@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Feature;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Utils\DataObject;
 use AndyDefer\Logger\Logger;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogQueryRecord;
@@ -15,6 +14,7 @@ use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\UnitTestCase;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 
 final class LoggerBufferIntegrationTest extends UnitTestCase
 {
@@ -52,10 +52,7 @@ final class LoggerBufferIntegrationTest extends UnitTestCase
 
     private function createLogDataRecord(string $type, array $payloadData): LogDataRecord
     {
-        $payload = new MixedPayloadCollection;
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new DataObject($payloadData);
 
         return new LogDataRecord(type: $type, payload: $payload);
     }
@@ -65,7 +62,7 @@ final class LoggerBufferIntegrationTest extends UnitTestCase
         $this->logger->enableBuffer(10);
 
         for ($i = 0; $i < 5; $i++) {
-            $this->logger->info($this->createLogDataRecord('test', [$i]));
+            $this->logger->info($this->createLogDataRecord('test', ['index' => $i]));
         }
 
         // Après 5 logs, aucun fichier ne devrait exister car buffer pas plein
@@ -90,7 +87,7 @@ final class LoggerBufferIntegrationTest extends UnitTestCase
         $this->logger->enableBuffer(3);
 
         for ($i = 0; $i < 3; $i++) {
-            $this->logger->info($this->createLogDataRecord('test', [$i]));
+            $this->logger->info($this->createLogDataRecord('test', ['index' => $i]));
         }
 
         // Après 3 logs, auto-flush doit avoir eu lieu
@@ -108,9 +105,9 @@ final class LoggerBufferIntegrationTest extends UnitTestCase
     {
         $this->logger->enableBuffer(10);
 
-        $this->logger->info($this->createLogDataRecord('user_login', [1]));
-        $this->logger->info($this->createLogDataRecord('user_login', [2]));
-        $this->logger->error($this->createLogDataRecord('payment_failed', [123]));
+        $this->logger->info($this->createLogDataRecord('user_login', ['user_id' => 1]));
+        $this->logger->info($this->createLogDataRecord('user_login', ['user_id' => 2]));
+        $this->logger->error($this->createLogDataRecord('payment_failed', ['payment_id' => 123]));
 
         // Query devrait flush le buffer avant d'exécuter
         $results = $this->logger->query(new LogQueryRecord(
@@ -126,8 +123,8 @@ final class LoggerBufferIntegrationTest extends UnitTestCase
     {
         $this->logger->enableBuffer(100);
 
-        $this->logger->info($this->createLogDataRecord('test', [1]));
-        $this->logger->info($this->createLogDataRecord('test', [2]));
+        $this->logger->info($this->createLogDataRecord('test', ['value' => 1]));
+        $this->logger->info($this->createLogDataRecord('test', ['value' => 2]));
 
         $datePath = $this->testLogPath . '/' . $this->currentDate;
         $this->assertDirectoryDoesNotExist($datePath);
@@ -148,7 +145,7 @@ final class LoggerBufferIntegrationTest extends UnitTestCase
         $this->logger->enableBuffer(1000);
 
         for ($i = 0; $i < 500; $i++) {
-            $this->logger->info($this->createLogDataRecord('perf_test', [$i]));
+            $this->logger->info($this->createLogDataRecord('perf_test', ['index' => $i]));
         }
 
         $this->logger->flush();

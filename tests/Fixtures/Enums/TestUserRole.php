@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Fixtures\Enums;
 
-use AndyDefer\Records\Traits\Enumable;
+use AndyDefer\DomainStructures\Traits\Enumable;;
 
 enum TestUserRole: string
 {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Fixtures\Records;
 
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
 use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserGrade;
 use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserRole;
 use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserStatus;
-use AndyDefer\Records\AbstractRecord;
-use AndyDefer\Records\Collections\TypedCollection;
 
 /**
  * Test record for unit tests.

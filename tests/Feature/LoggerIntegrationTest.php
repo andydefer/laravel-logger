@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Feature;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
+use AndyDefer\DomainStructures\Collections\Utility\StringTypedCollection;
+use AndyDefer\DomainStructures\Utils\DataObject;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Logger;
 use AndyDefer\Logger\Records\LogDataRecord;
@@ -19,7 +20,7 @@ use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserRole;
 use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserStatus;
 use AndyDefer\Logger\Tests\Fixtures\Records\TestUserRecord;
 use AndyDefer\Logger\Tests\UnitTestCase;
-use AndyDefer\Records\Collections\Utility\StringTypedCollection;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 
 final class LoggerIntegrationTest extends UnitTestCase
 {
@@ -59,10 +60,7 @@ final class LoggerIntegrationTest extends UnitTestCase
 
     private function createLogDataRecord(string $type, array $payloadData): LogDataRecord
     {
-        $payload = new MixedPayloadCollection;
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new DataObject($payloadData);
 
         return new LogDataRecord(type: $type, payload: $payload);
     }
@@ -71,9 +69,18 @@ final class LoggerIntegrationTest extends UnitTestCase
 
     public function test_complete_logging_workflow(): void
     {
-        $this->logger->info($this->createLogDataRecord('user_login', [1, '127.0.0.1']));
-        $this->logger->info($this->createLogDataRecord('user_login', [2, '127.0.0.1']));
-        $this->logger->error($this->createLogDataRecord('payment_failed', [123, 99.99]));
+        $this->logger->info($this->createLogDataRecord('user_login', [
+            'user_id' => 1,
+            'ip' => '127.0.0.1',
+        ]));
+        $this->logger->info($this->createLogDataRecord('user_login', [
+            'user_id' => 2,
+            'ip' => '127.0.0.1',
+        ]));
+        $this->logger->error($this->createLogDataRecord('payment_failed', [
+            'payment_id' => 123,
+            'amount' => 99.99,
+        ]));
 
         $dateRange = $this->getDateRange();
         $results = $this->logger->query(new LogQueryRecord(
@@ -90,7 +97,7 @@ final class LoggerIntegrationTest extends UnitTestCase
 
     public function test_logs_are_persisted_between_instances(): void
     {
-        $this->logger->info($this->createLogDataRecord('test', ['persisted']));
+        $this->logger->info($this->createLogDataRecord('test', ['message' => 'persisted']));
 
         $config = new LoggerConfig($this->testLogPath, 30);
         $pathService = new LogPathService($config);
@@ -113,11 +120,12 @@ final class LoggerIntegrationTest extends UnitTestCase
 
     public function test_can_log_and_query_complex_data(): void
     {
-        $payload = new MixedPayloadCollection;
-        $payload->add('order_created');
-        $payload->add(12345);
-        $payload->add(79.98);
-        $payload->add(true);
+        $payload = new DataObject([
+            'event' => 'order_created',
+            'order_id' => 12345,
+            'amount' => 79.98,
+            'paid' => true,
+        ]);
 
         $logData = new LogDataRecord(type: 'order_created', payload: $payload);
 
@@ -131,19 +139,20 @@ final class LoggerIntegrationTest extends UnitTestCase
 
         $this->assertSame(1, $results->count());
 
-        $log = $results->firstItem();
+        $log = $results->first();
         $this->assertSame('order_created', $log->data->type);
-        $this->assertContains(12345, $log->data->payload->all());
-        $this->assertContains(79.98, $log->data->payload->all());
-        $this->assertContains(true, $log->data->payload->all());
+        $this->assertSame(12345, $log->data->payload->order_id);
+        $this->assertSame(79.98, $log->data->payload->amount);
+        $this->assertTrue($log->data->payload->paid);
+        $this->assertSame('order_created', $log->data->payload->event);
     }
 
     public function test_multiple_log_levels_are_correctly_stored(): void
     {
-        $this->logger->debug($this->createLogDataRecord('debug_msg', []));
-        $this->logger->info($this->createLogDataRecord('info_msg', []));
-        $this->logger->warning($this->createLogDataRecord('warning_msg', []));
-        $this->logger->error($this->createLogDataRecord('error_msg', []));
+        $this->logger->debug($this->createLogDataRecord('debug_msg', ['value' => 1]));
+        $this->logger->info($this->createLogDataRecord('info_msg', ['value' => 2]));
+        $this->logger->warning($this->createLogDataRecord('warning_msg', ['value' => 3]));
+        $this->logger->error($this->createLogDataRecord('error_msg', ['value' => 4]));
 
         $dateRange = $this->getDateRange();
 
@@ -154,7 +163,7 @@ final class LoggerIntegrationTest extends UnitTestCase
         ));
         $this->assertSame(1, $debugResults->count());
         if ($debugResults->isNotEmpty()) {
-            $this->assertSame('debug_msg', $debugResults->firstItem()->data->type);
+            $this->assertSame('debug_msg', $debugResults->first()->data->type);
         }
 
         $infoResults = $this->logger->query(new LogQueryRecord(
@@ -164,7 +173,7 @@ final class LoggerIntegrationTest extends UnitTestCase
         ));
         $this->assertSame(1, $infoResults->count());
         if ($infoResults->isNotEmpty()) {
-            $this->assertSame('info_msg', $infoResults->firstItem()->data->type);
+            $this->assertSame('info_msg', $infoResults->first()->data->type);
         }
 
         $warningResults = $this->logger->query(new LogQueryRecord(
@@ -174,7 +183,7 @@ final class LoggerIntegrationTest extends UnitTestCase
         ));
         $this->assertSame(1, $warningResults->count());
         if ($warningResults->isNotEmpty()) {
-            $this->assertSame('warning_msg', $warningResults->firstItem()->data->type);
+            $this->assertSame('warning_msg', $warningResults->first()->data->type);
         }
 
         $errorResults = $this->logger->query(new LogQueryRecord(
@@ -184,18 +193,19 @@ final class LoggerIntegrationTest extends UnitTestCase
         ));
         $this->assertSame(1, $errorResults->count());
         if ($errorResults->isNotEmpty()) {
-            $this->assertSame('error_msg', $errorResults->firstItem()->data->type);
+            $this->assertSame('error_msg', $errorResults->first()->data->type);
         }
     }
 
     public function test_large_payload_logging(): void
     {
-        $largePayload = new MixedPayloadCollection;
+        $payloadData = [];
         for ($i = 0; $i < 100; $i++) {
-            $largePayload->add($i);
+            $payloadData["item_{$i}"] = $i;
         }
+        $payload = new DataObject($payloadData);
 
-        $logData = new LogDataRecord(type: 'large_payload', payload: $largePayload);
+        $logData = new LogDataRecord(type: 'large_payload', payload: $payload);
 
         $this->logger->info($logData);
 
@@ -207,12 +217,12 @@ final class LoggerIntegrationTest extends UnitTestCase
         ));
 
         $this->assertSame(1, $results->count());
-        $this->assertCount(100, $results->firstItem()->data->payload->all());
+        $this->assertCount(100, (array) $results->first()->data->payload->toArray());
     }
 
     public function test_query_by_date_range_boundaries(): void
     {
-        $this->logger->info($this->createLogDataRecord('boundary_test', []));
+        $this->logger->info($this->createLogDataRecord('boundary_test', ['value' => 1]));
 
         $dateRange = $this->getDateRange();
         $results = $this->logger->query(new LogQueryRecord(
@@ -235,10 +245,11 @@ final class LoggerIntegrationTest extends UnitTestCase
             role: TestUserRole::ADMIN,
         );
 
-        $payload = new MixedPayloadCollection;
-        $payload->add('user_created');
-        $payload->add($userRecord);
-        $payload->add(true);
+        $payload = new DataObject([
+            'action' => 'user_created',
+            'user' => $userRecord,
+            'success' => true,
+        ]);
 
         $logData = new LogDataRecord(type: 'user', payload: $payload);
         $this->logger->info($logData);
@@ -252,17 +263,15 @@ final class LoggerIntegrationTest extends UnitTestCase
 
         $this->assertSame(1, $results->count());
 
-        $log = $results->firstItem();
+        $log = $results->first();
         $this->assertSame('user', $log->data->type);
-        $this->assertSame('user_created', $log->data->payload->firstItem());
+        $this->assertSame('user_created', $log->data->payload->action);
 
-        $serializedRecord = $log->data->payload->toArray()[1];
+        $serializedRecord = $log->data->payload->user;
         $this->assertIsObject($serializedRecord);
         $this->assertEquals('John Doe', $serializedRecord->name);
         $this->assertEquals('john@example.com', $serializedRecord->email);
-        // Pour les pure enums, on compare avec le nom de l'enum (MAJUSCULES)
         $this->assertEquals('ACTIVE', $serializedRecord->status);
-        // Pour TestUserRole qui est un backed enum (string), on compare avec sa valeur
         $this->assertEquals('admin', $serializedRecord->role);
     }
 
@@ -280,8 +289,10 @@ final class LoggerIntegrationTest extends UnitTestCase
             role: TestUserRole::USER,
         );
 
-        $payload = new MixedPayloadCollection;
-        $payload->add('users_list', $userRecord1, $userRecord2);
+        $payload = new DataObject([
+            'action' => 'users_list',
+            'users' => [$userRecord1, $userRecord2],
+        ]);
 
         $logData = new LogDataRecord(type: 'users', payload: $payload);
         $this->logger->info($logData);
@@ -294,36 +305,36 @@ final class LoggerIntegrationTest extends UnitTestCase
 
         $this->assertSame(1, $results->count());
 
-        $log = $results->firstItem();
-        $payloadArray = $log->data->payload->toArray();
+        $log = $results->first();
+        $this->assertSame('users_list', $log->data->payload->action);
 
-        $this->assertSame('users_list', $payloadArray[0]);
+        $users = $log->data->payload->users;
+        $this->assertIsArray($users);
+        $this->assertCount(2, $users);
 
-        $this->assertIsObject($payloadArray[1]);
-        $this->assertEquals('John Doe', $payloadArray[1]->name);
-        $this->assertEquals('admin', $payloadArray[1]->role);
-
-        $this->assertIsObject($payloadArray[2]);
-        $this->assertEquals('Jane Smith', $payloadArray[2]->name);
-        $this->assertEquals('user', $payloadArray[2]->role);
+        $this->assertEquals('John Doe', $users[0]->name);
+        $this->assertEquals('admin', $users[0]->role);
+        $this->assertEquals('Jane Smith', $users[1]->name);
+        $this->assertEquals('user', $users[1]->role);
     }
 
     public function test_log_with_test_user_record_and_tags(): void
     {
-        // Créer un TypedRecords pour les tags
-        $tags = new StringTypedCollection();
+        // Créer un TypedCollection pour les tags
+        $tags = new StringTypedCollection;
         $tags->add('premium', 'vip', 'active');
 
-        $userRecord = new TestUserRecord(
-            name: 'John Doe',
-            email: 'john@example.com',
-            tags: $tags,
-        );
+        $userRecord = TestUserRecord::from([
+            'name' => 'John Doe',
+            'email' => 'john@example.com',
+            'tags' => $tags,
+        ]);
 
-        $payload = new MixedPayloadCollection;
-        $payload->add('user_with_tags');
-        $payload->add($userRecord);
-        $payload->add('metadata');
+        $payload = new DataObject([
+            'action' => 'user_with_tags',
+            'user' => $userRecord,
+            'metadata' => 'additional_info',
+        ]);
 
         $logData = new LogDataRecord(type: 'user_tags', payload: $payload);
         $this->logger->info($logData);
@@ -336,16 +347,14 @@ final class LoggerIntegrationTest extends UnitTestCase
 
         $this->assertSame(1, $results->count());
 
-        $log = $results->firstItem();
-        $payloadArray = $log->data->payload->toArray();
+        $log = $results->first();
+        $this->assertSame('user_with_tags', $log->data->payload->action);
 
-        $this->assertSame('user_with_tags', $payloadArray[0]);
+        $user = $log->data->payload->user;
+        $this->assertEquals('John Doe', $user->name);
+        $this->assertEquals(['premium', 'vip', 'active'], $user->tags->toArray());
 
-        $this->assertIsObject($payloadArray[1]);
-        $this->assertEquals('John Doe', $payloadArray[1]->name);
-        $this->assertEquals(['premium', 'vip', 'active'], $payloadArray[1]->tags);
-
-        $this->assertSame('metadata', $payloadArray[2]);
+        $this->assertSame('additional_info', $log->data->payload->metadata);
     }
 
     public function test_log_with_chained_payload_and_fixtures(): void
@@ -357,8 +366,12 @@ final class LoggerIntegrationTest extends UnitTestCase
             role: TestUserRole::ADMIN,
         );
 
-        $payload = new MixedPayloadCollection;
-        $payload->add('user_event')->add($userRecord)->add(42)->add(true);
+        $payload = new DataObject([
+            'action' => 'user_event',
+            'user' => $userRecord,
+            'code' => 42,
+            'success' => true,
+        ]);
 
         $logData = new LogDataRecord(type: 'user_event', payload: $payload);
         $this->logger->info($logData);
@@ -371,14 +384,12 @@ final class LoggerIntegrationTest extends UnitTestCase
 
         $this->assertSame(1, $results->count());
 
-        $log = $results->firstItem();
-        $payloadArray = $log->data->payload->toArray();
-
-        $this->assertSame('user_event', $payloadArray[0]);
-        $this->assertIsObject($payloadArray[1]);
-        $this->assertEquals('John Doe', $payloadArray[1]->name);
-        $this->assertEquals(42, $payloadArray[2]);
-        $this->assertEquals(true, $payloadArray[3]);
+        $log = $results->first();
+        $this->assertSame('user_event', $log->data->type);
+        $this->assertSame('user_event', $log->data->payload->action);
+        $this->assertEquals('John Doe', $log->data->payload->user->name);
+        $this->assertSame(42, $log->data->payload->code);
+        $this->assertTrue($log->data->payload->success);
     }
 
     private function deleteDirectory(string $dir): void

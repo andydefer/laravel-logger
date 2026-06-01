@@ -8,9 +8,9 @@ use AndyDefer\Directive\AbstractDirective;
 use AndyDefer\Directive\Enums\ExitCode;
 use AndyDefer\Directive\Services\DirectiveInteractionService;
 use AndyDefer\Directive\Services\LaravelBootstrapper;
+use AndyDefer\DomainStructures\Collections\Utility\StringTypedCollection;
 use AndyDefer\Logger\Services\LogCleanerService;
 use AndyDefer\Logger\Services\LogPathService;
-use AndyDefer\Records\Collections\Utility\StringTypedCollection;
 
 class LoggerCleanDirective extends AbstractDirective
 {
@@ -35,9 +35,9 @@ class LoggerCleanDirective extends AbstractDirective
 
     public function getAliases(): StringTypedCollection
     {
-        $aliases = new StringTypedCollection();
-        $aliases->add('log-clean');
-        $aliases->add('clean-logs');
+        $aliases = new StringTypedCollection;
+        $aliases->add('log-clean', 'clean-logs');
+
         return $aliases;
     }
 
@@ -80,7 +80,7 @@ class LoggerCleanDirective extends AbstractDirective
         $this->line("  Size: {$stats->totalSizeMb} MB");
         $this->line("  Lines: {$stats->totalLines}");
         $this->line("  Range: {$stats->oldestDate} to {$stats->newestDate}");
-        $this->line("  Path: {$this->pathService->getBasePath()}");
+        $this->line("  Path: {$this->pathService->getConfig()->basePath}");
     }
 
     private function displayFilesToDelete(string $cutoffDate): void
@@ -117,11 +117,13 @@ class LoggerCleanDirective extends AbstractDirective
 
         if ($count === 0) {
             $this->info('No files to delete.');
+
             return ExitCode::SUCCESS;
         }
 
-        if (!$this->confirm("Delete {$count} log(s) older than {$cutoffDate}?")) {
+        if (! $this->confirm("Delete {$count} log(s) older than {$cutoffDate}?")) {
             $this->info('Aborted.');
+
             return ExitCode::SUCCESS;
         }
 

@@ -6,7 +6,6 @@ namespace AndyDefer\Logger\Tests;
 
 use AndyDefer\Logger\LoggerServiceProvider;
 use Carbon\Carbon;
-use Illuminate\Foundation\Application;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class IntegrationTestCase extends Orchestra

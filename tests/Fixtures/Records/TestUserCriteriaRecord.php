@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Fixtures\Records;
 
-use AndyDefer\Records\AbstractRecord;
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 use AndyDefer\Records\Tests\Fixtures\Enums\TestBackedStringEnum;
 
 final class TestUserCriteriaRecord extends AbstractRecord

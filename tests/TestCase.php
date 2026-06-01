@@ -6,7 +6,7 @@ namespace AndyDefer\Logger\Tests;
 
 /**
  * @deprecated Use UnitTestCase or IntegrationTestCase instead
- * 
+ *
  * Cette classe est maintenue uniquement pour la compatibilité ascendante.
  * Les nouveaux tests NE DOIVENT PAS l'utiliser.
  */

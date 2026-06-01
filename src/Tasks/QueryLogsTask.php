@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tasks;
 
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
+use AndyDefer\Logger\Collections\LogDateCollection;
 use AndyDefer\Logger\Records\LogQueryRecord;
 use AndyDefer\Logger\Records\LogRecord;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
-use AndyDefer\Records\Collections\TypedCollection;
 use InvalidArgumentException;
 
 class QueryLogsTask
@@ -23,7 +24,6 @@ class QueryLogsTask
         $results = new TypedCollection(LogRecord::class);
 
         $dateRange = $this->pathService->getDateRange($query->from, $query->to);
-        $dateRange->assertAllOfType('string');
 
         $files = $this->getFilesFromDateRange($dateRange);
 
@@ -34,12 +34,12 @@ class QueryLogsTask
         return $results;
     }
 
-    private function getFilesFromDateRange(TypedCollection $dateRange): TypedCollection
+    private function getFilesFromDateRange(LogDateCollection $dateRange): TypedCollection
     {
         $files = new TypedCollection('string');
 
         foreach ($dateRange as $date) {
-            $dayFiles = $this->pathService->getDayFiles($date);
+            $dayFiles = $this->pathService->getDayFiles($date->getValue());
 
             foreach ($dayFiles as $fileInfo) {
                 $files->add($fileInfo->path);

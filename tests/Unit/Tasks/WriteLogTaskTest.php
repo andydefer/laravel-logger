@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Tasks;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Utils\StrictDataObject;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogRecord;
@@ -20,7 +20,9 @@ use RuntimeException;
 final class WriteLogTaskTest extends UnitTestCase
 {
     private WriteLogTask $task;
+
     private string $testLogPath;
+
     private LogSerializerService $serializer;
 
     protected function setUp(): void
@@ -29,13 +31,13 @@ final class WriteLogTaskTest extends UnitTestCase
 
         $this->testLogPath = sys_get_temp_dir() . '/test_logs_' . uniqid();
 
-        if (!is_dir($this->testLogPath)) {
+        if (! is_dir($this->testLogPath)) {
             mkdir($this->testLogPath, 0777, true);
         }
 
         $config = new LoggerConfig($this->testLogPath, 30);
         $pathService = new LogPathService($config);
-        $this->serializer = new LogSerializerService();
+        $this->serializer = new LogSerializerService;
         $this->task = new WriteLogTask($pathService, $this->serializer);
     }
 
@@ -49,10 +51,7 @@ final class WriteLogTaskTest extends UnitTestCase
 
     private function createLogRecord(string $time, LogLevel $level, string $type, array $payloadData): LogRecord
     {
-        $payload = new MixedPayloadCollection();
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new StrictDataObject($payloadData);
 
         $logData = new LogDataRecord(type: $type, payload: $payload);
 
@@ -71,7 +70,10 @@ final class WriteLogTaskTest extends UnitTestCase
             time: $currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'user_login',
-            payloadData: [1, '127.0.0.1'],
+            payloadData: [
+                'user_id' => 1,
+                'ip' => '127.0.0.1',
+            ],
         );
 
         $this->task->execute($record);
@@ -82,6 +84,8 @@ final class WriteLogTaskTest extends UnitTestCase
         $content = file_get_contents($filePath);
         $this->assertStringContainsString('"level":"info"', $content);
         $this->assertStringContainsString('"type":"user_login"', $content);
+        $this->assertStringContainsString('"user_id":1', $content);
+        $this->assertStringContainsString('"ip":"127.0.0.1"', $content);
     }
 
     public function test_execute_appends_multiple_entries_to_same_hour_file(): void
@@ -92,14 +96,14 @@ final class WriteLogTaskTest extends UnitTestCase
             time: $currentDate . 'T10:15:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [1],
+            payloadData: ['value' => 1],
         );
 
         $record2 = $this->createLogRecord(
             time: $currentDate . 'T10:45:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [2],
+            payloadData: ['value' => 2],
         );
 
         $this->task->execute($record1);
@@ -120,14 +124,14 @@ final class WriteLogTaskTest extends UnitTestCase
             time: $currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [1],
+            payloadData: ['value' => 1],
         );
 
         $record2 = $this->createLogRecord(
             time: $currentDate . 'T11:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [2],
+            payloadData: ['value' => 2],
         );
 
         $this->task->execute($record1);
@@ -141,8 +145,12 @@ final class WriteLogTaskTest extends UnitTestCase
     {
         $currentDate = date('Y-m-d');
 
-        $payload = new MixedPayloadCollection();
-        $payload->add('order_created', 12345, 79.98, true);
+        $payload = new StrictDataObject([
+            'event' => 'order_created',
+            'order_id' => 12345,
+            'amount' => 79.98,
+            'paid' => true,
+        ]);
 
         $logData = new LogDataRecord(type: 'order_created', payload: $payload);
 
@@ -159,8 +167,10 @@ final class WriteLogTaskTest extends UnitTestCase
         $decoded = json_decode($content, true);
 
         $this->assertSame('order_created', $decoded['data']['type']);
-        $this->assertContains(12345, $decoded['data']['payload']);
-        $this->assertContains(79.98, $decoded['data']['payload']);
+        $this->assertSame(12345, $decoded['data']['payload']['order_id']);
+        $this->assertSame(79.98, $decoded['data']['payload']['amount']);
+        $this->assertTrue($decoded['data']['payload']['paid']);
+        $this->assertSame('order_created', $decoded['data']['payload']['event']);
     }
 
     #[WithoutErrorHandler]
@@ -178,7 +188,7 @@ final class WriteLogTaskTest extends UnitTestCase
             time: $currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: ['data'],
+            payloadData: ['data' => 'value'],
         );
 
         $thrown = false;
@@ -210,7 +220,7 @@ final class WriteLogTaskTest extends UnitTestCase
             time: $currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: ['data'],
+            payloadData: ['data' => 'value'],
         );
 
         $thrown = false;
@@ -234,7 +244,11 @@ final class WriteLogTaskTest extends UnitTestCase
             time: $currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test_event',
-            payloadData: [42, 'string_value', true],
+            payloadData: [
+                'number' => 42,
+                'text' => 'string_value',
+                'flag' => true,
+            ],
         );
 
         $this->task->execute($record);
@@ -244,9 +258,9 @@ final class WriteLogTaskTest extends UnitTestCase
         $decoded = json_decode($content, true);
 
         $this->assertSame('test_event', $decoded['data']['type']);
-        $this->assertContains(42, $decoded['data']['payload']);
-        $this->assertContains('string_value', $decoded['data']['payload']);
-        $this->assertContains(true, $decoded['data']['payload']);
+        $this->assertSame(42, $decoded['data']['payload']['number']);
+        $this->assertSame('string_value', $decoded['data']['payload']['text']);
+        $this->assertTrue($decoded['data']['payload']['flag']);
     }
 
     private function deleteDirectory(string $dir): void

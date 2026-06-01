@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit\Services;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Utils\DataObject;
+use AndyDefer\DomainStructures\Utils\StrictDataObject;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogRecord;
@@ -14,6 +14,7 @@ use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\UnitTestCase;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 
 final class LogBufferServiceTest extends UnitTestCase
 {
@@ -50,10 +51,7 @@ final class LogBufferServiceTest extends UnitTestCase
 
     private function createLogRecord(string $time, LogLevel $level, string $type, array $payloadData): LogRecord
     {
-        $payload = new MixedPayloadCollection;
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new StrictDataObject($payloadData);
 
         $logData = new LogDataRecord(type: $type, payload: $payload);
 
@@ -70,7 +68,7 @@ final class LogBufferServiceTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [1],
+            payloadData: ['value' => 1],
         );
 
         $this->buffer->push($record);
@@ -81,9 +79,9 @@ final class LogBufferServiceTest extends UnitTestCase
 
     public function test_buffer_auto_flushes_when_size_reached(): void
     {
-        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', [1]);
-        $record2 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', [2]);
-        $record3 = $this->createLogRecord($this->currentDate . 'T10:28:00Z', LogLevel::INFO, 'test', [3]);
+        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', ['value' => 1]);
+        $record2 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', ['value' => 2]);
+        $record3 = $this->createLogRecord($this->currentDate . 'T10:28:00Z', LogLevel::INFO, 'test', ['value' => 3]);
 
         $this->buffer->push($record1);
         $this->buffer->push($record2);
@@ -102,8 +100,8 @@ final class LogBufferServiceTest extends UnitTestCase
 
     public function test_flush_manually_writes_all_records(): void
     {
-        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', [1]);
-        $record2 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', [2]);
+        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', ['value' => 1]);
+        $record2 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', ['value' => 2]);
 
         $this->buffer->push($record1);
         $this->buffer->push($record2);
@@ -128,9 +126,9 @@ final class LogBufferServiceTest extends UnitTestCase
             $callbackCount = $count;
         });
 
-        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', [1]);
-        $record2 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', [2]);
-        $record3 = $this->createLogRecord($this->currentDate . 'T10:28:00Z', LogLevel::INFO, 'test', [3]);
+        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', ['value' => 1]);
+        $record2 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', ['value' => 2]);
+        $record3 = $this->createLogRecord($this->currentDate . 'T10:28:00Z', LogLevel::INFO, 'test', ['value' => 3]);
 
         $this->buffer->push($record1);
         $this->buffer->push($record2);
@@ -162,7 +160,7 @@ final class LogBufferServiceTest extends UnitTestCase
             time: $this->currentDate . 'T10:26:00Z',
             level: LogLevel::INFO,
             type: 'test',
-            payloadData: [1],
+            payloadData: ['value' => 1],
         );
 
         $this->buffer->push($record);
@@ -176,9 +174,9 @@ final class LogBufferServiceTest extends UnitTestCase
 
     public function test_buffer_groups_records_by_file(): void
     {
-        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', [1]);
-        $record2 = $this->createLogRecord($this->currentDate . 'T11:26:00Z', LogLevel::INFO, 'test', [2]);
-        $record3 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', [3]);
+        $record1 = $this->createLogRecord($this->currentDate . 'T10:26:00Z', LogLevel::INFO, 'test', ['value' => 1]);
+        $record2 = $this->createLogRecord($this->currentDate . 'T11:26:00Z', LogLevel::INFO, 'test', ['value' => 2]);
+        $record3 = $this->createLogRecord($this->currentDate . 'T10:27:00Z', LogLevel::INFO, 'test', ['value' => 3]);
 
         $buffer = new LogBufferService($this->writeTask, 10);
         $buffer->push($record1);

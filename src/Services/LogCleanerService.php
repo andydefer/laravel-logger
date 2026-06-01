@@ -4,9 +4,18 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Services;
 
+use AndyDefer\Logger\Collections\LogFileInfoCollection;
 use AndyDefer\Logger\Records\LogStatsRecord;
-use AndyDefer\Records\Collections\TypedCollection;
+use AndyDefer\Logger\ValueObjects\LogDate;
 
+/**
+ * Service for cleaning and analyzing log files.
+ *
+ * Handles deletion of old log files, counting files to delete,
+ * and generating statistics about log files.
+ *
+ * @author Andy Defer
+ */
 class LogCleanerService
 {
     public function __construct(
@@ -22,9 +31,11 @@ class LogCleanerService
     {
         $deletedCount = 0;
         $allFiles = $this->pathService->listAllLogFiles();
+        $cutoff = LogDate::from(['value' => $cutoffDate]);
 
         foreach ($allFiles as $fileInfo) {
-            if ($fileInfo->date < $cutoffDate) {
+            $fileDate = LogDate::from(['value' => $fileInfo->date]);
+            if ($fileDate->isBefore($cutoff)) {
                 if (unlink($fileInfo->path)) {
                     $deletedCount++;
                 }
@@ -40,9 +51,11 @@ class LogCleanerService
     {
         $count = 0;
         $allFiles = $this->pathService->listAllLogFiles();
+        $cutoff = LogDate::from(['value' => $cutoffDate]);
 
         foreach ($allFiles as $fileInfo) {
-            if ($fileInfo->date < $cutoffDate) {
+            $fileDate = LogDate::from(['value' => $fileInfo->date]);
+            if ($fileDate->isBefore($cutoff)) {
                 $count++;
             }
         }
@@ -80,18 +93,21 @@ class LogCleanerService
             $dates[$fileInfo->date] = true;
         }
 
+        $oldestDate = $allFiles->first()?->date;
+        $newestDate = $allFiles->last()?->date;
+
         return new LogStatsRecord(
             totalFiles: $allFiles->count(),
             totalDays: count($dates),
             totalSizeBytes: $totalSize,
             totalSizeMb: round($totalSize / 1024 / 1024, 2),
             totalLines: $totalLines,
-            oldestDate: $allFiles->firstItem()?->date ?? null,
-            newestDate: $allFiles->lastItem()?->date ?? null,
+            oldestDate: $oldestDate,
+            newestDate: $newestDate,
         );
     }
 
-    public function getFilesByDate(string $date): TypedCollection
+    public function getFilesByDate(string $date): LogFileInfoCollection
     {
         return $this->pathService->getDayFiles($date);
     }

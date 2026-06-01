@@ -4,18 +4,11 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Integration\Config;
 
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 use AndyDefer\Logger\Tests\IntegrationTestCase;
 
 final class LoggerConfigTest extends IntegrationTestCase
 {
-    public function test_default_returns_config_with_default_values(): void
-    {
-        $config = LoggerConfig::default();
-
-        $this->assertIsString($config->basePath);
-        $this->assertSame(30, $config->retentionDays);
-    }
 
     public function test_with_base_path_returns_new_config_with_updated_base_path(): void
     {
@@ -55,7 +48,7 @@ final class LoggerConfigTest extends IntegrationTestCase
     {
         $config = new LoggerConfig('/test/path', 45);
 
-        $array = $config->toArray();
+        $array = $config->getValue()->toArray();
 
         $this->assertSame('/test/path', $array['base_path']);
         $this->assertSame(45, $array['retention_days']);

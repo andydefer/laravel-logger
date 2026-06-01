@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Feature;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\DomainStructures\Utils\DataObject;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Logger;
 use AndyDefer\Logger\Records\LogDataRecord;
@@ -17,6 +16,7 @@ use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\UnitTestCase;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 
 final class LoggerCleanerIntegrationTest extends UnitTestCase
 {
@@ -56,10 +56,7 @@ final class LoggerCleanerIntegrationTest extends UnitTestCase
 
     private function createLogDataRecord(string $type, array $payloadData): LogDataRecord
     {
-        $payload = new MixedPayloadCollection;
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new DataObject($payloadData);
 
         return new LogDataRecord(type: $type, payload: $payload);
     }
@@ -70,7 +67,7 @@ final class LoggerCleanerIntegrationTest extends UnitTestCase
         $this->logger->log(new LogRecord(
             time: $timestamp,
             level: LogLevel::INFO,
-            data: $this->createLogDataRecord('test', [$hour]),
+            data: $this->createLogDataRecord('test', ['hour' => $hour]),
         ));
     }
 
@@ -95,10 +92,10 @@ final class LoggerCleanerIntegrationTest extends UnitTestCase
 
         $stats = $this->cleaner->getStats();
 
-        $this->assertSame(2, $stats['total_files']);
-        $this->assertSame(1, $stats['total_days']);
-        $this->assertGreaterThan(0, $stats['total_size_bytes']);
-        $this->assertGreaterThan(0, $stats['total_lines']);
+        $this->assertSame(2, $stats->totalFiles);
+        $this->assertSame(1, $stats->totalDays);
+        $this->assertGreaterThan(0, $stats->totalSizeBytes);
+        $this->assertGreaterThan(0, $stats->totalLines);
     }
 
     public function test_cleaner_removes_empty_directories(): void

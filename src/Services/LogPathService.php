@@ -4,23 +4,31 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Services;
 
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\Logger\Collections\LogDateCollection;
+use AndyDefer\Logger\Collections\LogFileInfoCollection;
 use AndyDefer\Logger\Records\DateRangeRecord;
 use AndyDefer\Logger\Records\LogFileInfoRecord;
-use AndyDefer\Records\Collections\TypedCollection;
+use AndyDefer\Logger\ValueObjects\LogDate;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 
+/**
+ * Service for managing log file paths and file system operations.
+ *
+ * Handles file path generation, directory scanning, file information retrieval,
+ * and log cleanup operations.
+ *
+ * @author Andy Defer
+ */
 class LogPathService
 {
     private LoggerConfig $config;
 
     public function __construct(?LoggerConfig $config = null)
     {
-        $this->config = $config ?? LoggerConfig::default();
-    }
-
-    public function getBasePath(): string
-    {
-        return $this->config->basePath;
+        $this->config = $config ?? LoggerConfig::from([
+            'basePath' => storage_path('logs/structured'),
+            'retentionDays' => 30,
+        ]);
     }
 
     public function getConfig(): LoggerConfig
@@ -37,9 +45,9 @@ class LogPathService
         return $this->config->basePath . '/' . $date . '/' . $hourRange . '.jsonl';
     }
 
-    public function getDayFiles(string $date): TypedCollection
+    public function getDayFiles(string $date): LogFileInfoCollection
     {
-        $results = new TypedCollection(LogFileInfoRecord::class);
+        $results = new LogFileInfoCollection;
         $dayPath = $this->config->basePath . '/' . $date;
 
         if (! is_dir($dayPath)) {
@@ -66,32 +74,27 @@ class LogPathService
         return $results;
     }
 
-    public function getDateRange(?string $from, ?string $to): TypedCollection
+    public function getDateRange(?string $from, ?string $to): LogDateCollection
     {
-        $dates = new TypedCollection('string');
+        $dates = new LogDateCollection;
 
-        if ($from === null) {
-            $start = date('Y-m-d', strtotime('-' . $this->config->retentionDays . ' days'));
-        } else {
-            $start = substr($from, 0, 10);
-        }
+        $startDate = $from === null
+            ? LogDate::from(['value' => date('Y-m-d', strtotime('-' . $this->config->retentionDays . ' days'))])
+            : LogDate::from(['value' => substr($from, 0, 10)]);
 
-        if ($to === null) {
-            $end = date('Y-m-d');
-        } else {
-            $end = substr($to, 0, 10);
-        }
+        $endDate = $to === null
+            ? LogDate::from(['value' => date('Y-m-d')])
+            : LogDate::from(['value' => substr($to, 0, 10)]);
 
-        $current = strtotime($start);
-        $endTimestamp = strtotime($end);
+        $current = $startDate;
 
-        if ($current > $endTimestamp) {
+        if ($current->isAfter($endDate)) {
             return $dates;
         }
 
-        while ($current <= $endTimestamp) {
-            $dates->add(date('Y-m-d', $current));
-            $current = strtotime('+1 day', $current);
+        while ($current->isBefore($endDate) || $current->isEqual($endDate)) {
+            $dates->add($current);
+            $current = $current->addDays(1);
         }
 
         return $dates;
@@ -100,10 +103,8 @@ class LogPathService
     public function getDateRangeWithInfo(?string $from, ?string $to): DateRangeRecord
     {
         $dates = $this->getDateRange($from, $to);
-        $dates->assertAllOfType('string');
-
-        $start = $dates->firstItem() ?? '';
-        $end = $dates->lastItem() ?? '';
+        $start = $dates->first()?->getValue() ?? '';
+        $end = $dates->last()?->getValue() ?? '';
 
         return new DateRangeRecord(
             start: $start,
@@ -112,9 +113,9 @@ class LogPathService
         );
     }
 
-    public function listAllLogFiles(): TypedCollection
+    public function listAllLogFiles(): LogFileInfoCollection
     {
-        $results = new TypedCollection(LogFileInfoRecord::class);
+        $results = new LogFileInfoCollection;
 
         if (! is_dir($this->config->basePath)) {
             return $results;
@@ -137,12 +138,13 @@ class LogPathService
     public function cleanupOldLogs(): int
     {
         $deletedCount = 0;
-        $cutoffDate = date('Y-m-d', strtotime('-' . $this->config->retentionDays . ' days'));
+        $cutoffDate = LogDate::from(['value' => date('Y-m-d', strtotime('-' . $this->config->retentionDays . ' days'))]);
 
         $allFiles = $this->listAllLogFiles();
 
         foreach ($allFiles as $fileInfo) {
-            if ($fileInfo->date < $cutoffDate) {
+            $fileDate = LogDate::from(['value' => $fileInfo->date]);
+            if ($fileDate->isBefore($cutoffDate)) {
                 if (unlink($fileInfo->path)) {
                     $deletedCount++;
                 }

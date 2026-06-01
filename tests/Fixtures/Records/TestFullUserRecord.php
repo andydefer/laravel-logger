@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Fixtures\Records;
 
-use AndyDefer\Records\Collections\TypedCollection;
-use AndyDefer\Records\AbstractRecord;
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
 use AndyDefer\Records\Tests\Fixtures\Enums\TestUserGrade;
 use AndyDefer\Records\Tests\Fixtures\Enums\TestUserRole;
 use AndyDefer\Records\Tests\Fixtures\Enums\TestUserStatus;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Records;
 
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 use AndyDefer\Logger\Enums\LogLevel;
-use AndyDefer\Records\AbstractRecord;
 
 final class LogQueryRecord extends AbstractRecord
 {

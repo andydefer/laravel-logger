@@ -5,54 +5,76 @@ declare(strict_types=1);
 namespace AndyDefer\Logger;
 
 use AndyDefer\Directive\Services\DirectiveInteractionService;
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\Directive\Services\LaravelBootstrapper;
 use AndyDefer\Logger\Contracts\LoggerInterface;
 use AndyDefer\Logger\Directives\LoggerCleanDirective;
-use AndyDefer\Logger\Logger;
 use AndyDefer\Logger\Services\LogCleanerService;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 use Illuminate\Support\ServiceProvider;
 
-class LoggerServiceProvider extends ServiceProvider
+/**
+ * Service provider for the Laravel Logger package.
+ *
+ * Registers all logger services, tasks, and directives in the container.
+ *
+ * @author Andy Defer
+ */
+final class LoggerServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Config
-        $this->app->singleton(LoggerConfig::class, function ($app) {
-            $config = LoggerConfig::default();
+        $this->registerConfig();
+        $this->registerServices();
+        $this->registerTasks();
+        $this->registerLogger();
+        $this->registerDirective();
+    }
 
-            if ($app->has('config') && $app->config->has('logger')) {
-                $appConfig = $app->config->get('logger', []);
+    private function registerConfig(): void
+    {
+        $this->app->singleton(LoggerConfig::class, function ($app) {
+            $configData = [
+                'basePath' => storage_path('logs/structured'),
+                'retentionDays' => 30,
+            ];
+
+            if ($app->has('config') && $app['config']->has('logger')) {
+                $appConfig = $app['config']->get('logger', []);
 
                 if (isset($appConfig['path'])) {
-                    $config = $config->withBasePath($appConfig['path']);
+                    $configData['basePath'] = $appConfig['path'];
                 }
                 if (isset($appConfig['retention_days'])) {
-                    $config = $config->withRetentionDays($appConfig['retention_days']);
+                    $configData['retentionDays'] = $appConfig['retention_days'];
                 }
             }
 
-            return $config;
+            return LoggerConfig::from($configData);
         });
+    }
 
-        // Services
+    private function registerServices(): void
+    {
         $this->app->singleton(LogPathService::class, function ($app) {
             return new LogPathService($app->make(LoggerConfig::class));
         });
 
-        $this->app->singleton(LogSerializerService::class, function ($app) {
-            return new LogSerializerService();
+        $this->app->singleton(LogSerializerService::class, function () {
+            return new LogSerializerService;
         });
 
         $this->app->singleton(LogCleanerService::class, function ($app) {
             return new LogCleanerService($app->make(LogPathService::class));
         });
+    }
 
-        // Tasks
+    private function registerTasks(): void
+    {
         $this->app->singleton(WriteLogTask::class, function ($app) {
             return new WriteLogTask(
                 $app->make(LogPathService::class),
@@ -73,8 +95,10 @@ class LoggerServiceProvider extends ServiceProvider
                 $app->make(LogSerializerService::class),
             );
         });
+    }
 
-        // Enregistrer l'implémentation concrète Logger
+    private function registerLogger(): void
+    {
         $this->app->singleton(Logger::class, function ($app) {
             return new Logger(
                 $app->make(WriteLogTask::class),
@@ -83,13 +107,9 @@ class LoggerServiceProvider extends ServiceProvider
             );
         });
 
-        // Logger singleton via l'interface
         $this->app->singleton(LoggerInterface::class, function ($app) {
             return $app->make(Logger::class);
         });
-
-        // 🔥 Enregistrer la directive LoggerCleanDirective (singleton uniquement)
-        $this->registerDirective();
     }
 
     private function registerDirective(): void
@@ -99,6 +119,7 @@ class LoggerServiceProvider extends ServiceProvider
                 $app->make(DirectiveInteractionService::class),
                 $app->make(LogCleanerService::class),
                 $app->make(LogPathService::class),
+                $app->make(LaravelBootstrapper::class),
             );
         });
     }
@@ -106,14 +127,18 @@ class LoggerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../../config/logger.php' => config_path('logger.php'),
+            __DIR__.'/../../config/logger.php' => config_path('logger.php'),
         ], 'logger-config');
 
-        // Nettoyage automatique à la fin de la requête
+        $this->registerAutoCleanup();
+    }
+
+    private function registerAutoCleanup(): void
+    {
         $this->app->terminating(function () {
             $cleaner = $this->app->make(LogCleanerService::class);
             $config = $this->app->make(LoggerConfig::class);
-            $cutoffDate = date('Y-m-d', strtotime('-' . $config->retentionDays . ' days'));
+            $cutoffDate = date('Y-m-d', strtotime('-'.$config->retentionDays.' days'));
             $cleaner->cleanWithCutoff($cutoffDate);
         });
     }

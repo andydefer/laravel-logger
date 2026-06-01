@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Fixtures\Records;
 
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 use AndyDefer\Logger\Tests\Fixtures\Enums\TestUserStatus;
-use AndyDefer\Records\AbstractRecord;
 
 final class TestUserUpdateRecord extends AbstractRecord
 {

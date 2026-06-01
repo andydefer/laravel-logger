@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tasks;
 
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
 use AndyDefer\Logger\Records\LogRecord;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Services\LogSerializerService;
-use AndyDefer\Records\Collections\TypedCollection;
 
 class StreamLogsTask
 {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Integration;
 
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 use AndyDefer\Logger\Contracts\LoggerInterface;
 use AndyDefer\Logger\Directives\LoggerCleanDirective;
 use AndyDefer\Logger\Logger;

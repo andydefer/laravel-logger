@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Fixtures\Records;
 
-use AndyDefer\Records\Collections\TypedCollection;
-use AndyDefer\Records\AbstractRecord;
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
 
 /**
  * Fixture record for testing collections of collections.

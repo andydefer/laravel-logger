@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Unit\Services;
 
-use AndyDefer\Logger\Config\LoggerConfig;
+use AndyDefer\Logger\Collections\LogDateCollection;
+use AndyDefer\Logger\Collections\LogFileInfoCollection;
 use AndyDefer\Logger\Services\LogPathService;
 use AndyDefer\Logger\Tests\UnitTestCase;
-use AndyDefer\Records\Collections\TypedCollection;
+use AndyDefer\Logger\ValueObjects\LoggerConfig;
 
 final class LogPathServiceTest extends UnitTestCase
 {
     private LogPathService $service;
+
     private string $testBasePath;
+
     private string $currentDate;
 
     protected function setUp(): void
@@ -32,9 +35,9 @@ final class LogPathServiceTest extends UnitTestCase
         parent::tearDown();
     }
 
-    public function test_getBasePath_returns_configured_path(): void
+    public function test_get_base_path_returns_configured_path(): void
     {
-        $this->assertSame($this->testBasePath, $this->service->getBasePath());
+        $this->assertSame($this->testBasePath, $this->service->getConfig()->basePath);
     }
 
     public function test_get_hourly_file_path_returns_correct_path_for_midnight(): void
@@ -77,8 +80,9 @@ final class LogPathServiceTest extends UnitTestCase
     {
         $dates = $this->service->getDateRange($this->currentDate . 'T00:00:00Z', $this->currentDate . 'T23:59:59Z');
 
-        $this->assertInstanceOf(TypedCollection::class, $dates);
-        $this->assertSame([$this->currentDate], $dates->toArray());
+        $this->assertInstanceOf(LogDateCollection::class, $dates);
+        $this->assertCount(1, $dates);
+        $this->assertSame($this->currentDate, $dates->first()?->getValue());
     }
 
     public function test_get_date_range_returns_multiple_days_when_range_spans_several_days(): void
@@ -88,9 +92,9 @@ final class LogPathServiceTest extends UnitTestCase
 
         $dates = $this->service->getDateRange($startDate . 'T00:00:00Z', $endDate . 'T23:59:59Z');
 
-        $this->assertInstanceOf(TypedCollection::class, $dates);
-        $this->assertCount(3, $dates->toArray());
-        $this->assertSame($endDate, $dates->lastItem());
+        $this->assertInstanceOf(LogDateCollection::class, $dates);
+        $this->assertCount(3, $dates);
+        $this->assertSame($endDate, $dates->last()?->getValue());
     }
 
     public function test_get_date_range_uses_retention_days_when_from_is_null(): void
@@ -98,12 +102,12 @@ final class LogPathServiceTest extends UnitTestCase
         $futureDate = date('Y-m-d', strtotime('+60 days'));
         $dates = $this->service->getDateRange(null, $futureDate . 'T23:59:59Z');
 
-        $this->assertInstanceOf(TypedCollection::class, $dates);
+        $this->assertInstanceOf(LogDateCollection::class, $dates);
         $this->assertNotEmpty($dates->toArray());
 
         $expectedStartDate = date('Y-m-d', strtotime('-30 days'));
-        $this->assertSame($expectedStartDate, $dates->firstItem());
-        $this->assertSame($futureDate, $dates->lastItem());
+        $this->assertSame($expectedStartDate, $dates->first()?->getValue());
+        $this->assertSame($futureDate, $dates->last()?->getValue());
     }
 
     public function test_get_date_range_uses_today_when_to_is_null(): void
@@ -113,9 +117,9 @@ final class LogPathServiceTest extends UnitTestCase
 
         $dates = $this->service->getDateRange($startDate . 'T00:00:00Z', null);
 
-        $this->assertInstanceOf(TypedCollection::class, $dates);
+        $this->assertInstanceOf(LogDateCollection::class, $dates);
         $this->assertNotEmpty($dates->toArray());
-        $this->assertSame($today, $dates->lastItem());
+        $this->assertSame($today, $dates->last()?->getValue());
     }
 
     public function test_get_date_range_returns_empty_collection_when_start_after_end(): void
@@ -123,7 +127,7 @@ final class LogPathServiceTest extends UnitTestCase
         $pastDate = date('Y-m-d', strtotime('-60 days'));
         $dates = $this->service->getDateRange(null, $pastDate . 'T23:59:59Z');
 
-        $this->assertInstanceOf(TypedCollection::class, $dates);
+        $this->assertInstanceOf(LogDateCollection::class, $dates);
         $this->assertEmpty($dates->toArray());
     }
 
@@ -131,7 +135,7 @@ final class LogPathServiceTest extends UnitTestCase
     {
         $files = $this->service->getDayFiles($this->currentDate);
 
-        $this->assertInstanceOf(TypedCollection::class, $files);
+        $this->assertInstanceOf(LogFileInfoCollection::class, $files);
         $this->assertEmpty($files->toArray());
     }
 
@@ -143,11 +147,11 @@ final class LogPathServiceTest extends UnitTestCase
         $this->assertSame($this->testBasePath, $config->basePath);
     }
 
-    public function test_listAllLogFiles_returns_empty_when_directory_does_not_exist(): void
+    public function test_list_all_log_files_returns_empty_when_directory_does_not_exist(): void
     {
         $files = $this->service->listAllLogFiles();
 
-        $this->assertInstanceOf(TypedCollection::class, $files);
+        $this->assertInstanceOf(LogFileInfoCollection::class, $files);
         $this->assertEmpty($files->toArray());
     }
 
@@ -155,8 +159,12 @@ final class LogPathServiceTest extends UnitTestCase
     {
         $dates = $this->service->getDateRange('2026-04-01T00:00:00Z', '2026-04-05T23:59:59Z');
 
-        $this->assertInstanceOf(TypedCollection::class, $dates);
-        $this->assertSame(['2026-04-01', '2026-04-02', '2026-04-03', '2026-04-04', '2026-04-05'], $dates->toArray());
+        $this->assertInstanceOf(LogDateCollection::class, $dates);
+
+        $expectedDates = ['2026-04-01', '2026-04-02', '2026-04-03', '2026-04-04', '2026-04-05'];
+        $actualDates = array_map(fn($date) => $date->getValue(), $dates->toArray());
+
+        $this->assertSame($expectedDates, $actualDates);
     }
 
     private function deleteDirectory(string $dir): void

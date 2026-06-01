@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger;
 
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
 use AndyDefer\Logger\Contracts\LoggerInterface;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Records\LogQueryRecord;
@@ -12,8 +14,6 @@ use AndyDefer\Logger\Services\LogBufferService;
 use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
-use AndyDefer\Records\Collections\TypedCollection;
-use AndyDefer\Records\Recordable;
 
 class Logger implements LoggerInterface
 {
@@ -77,7 +77,7 @@ class Logger implements LoggerInterface
         $this->write($record);
     }
 
-    public function info(Recordable $data): void
+    public function info(AbstractRecord $data): void
     {
         $this->write(new LogRecord(
             time: now()->toIso8601ZuluString(),
@@ -86,7 +86,7 @@ class Logger implements LoggerInterface
         ));
     }
 
-    public function warning(Recordable $data): void
+    public function warning(AbstractRecord $data): void
     {
         $this->write(new LogRecord(
             time: now()->toIso8601ZuluString(),
@@ -95,7 +95,7 @@ class Logger implements LoggerInterface
         ));
     }
 
-    public function error(Recordable $data): void
+    public function error(AbstractRecord $data): void
     {
         $this->write(new LogRecord(
             time: now()->toIso8601ZuluString(),
@@ -104,7 +104,7 @@ class Logger implements LoggerInterface
         ));
     }
 
-    public function debug(Recordable $data): void
+    public function debug(AbstractRecord $data): void
     {
         $this->write(new LogRecord(
             time: now()->toIso8601ZuluString(),

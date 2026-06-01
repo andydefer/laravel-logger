@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\BestPractices\Tests\Logger\Unit;
 
-use AndyDefer\Logger\Tests\TestCase;
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
+use AndyDefer\DomainStructures\Utils\StrictDataObject;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\Logger;
 use AndyDefer\Logger\Records\LogDataRecord;
@@ -15,7 +15,6 @@ use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
 use AndyDefer\Logger\Tests\UnitTestCase;
-use AndyDefer\Records\Collections\TypedCollection;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -47,10 +46,7 @@ final class LoggerTest extends UnitTestCase
 
     private function createLogDataRecord(string $type, array $payloadData): LogDataRecord
     {
-        $payload = new MixedPayloadCollection;
-        foreach ($payloadData as $item) {
-            $payload->add($item);
-        }
+        $payload = new StrictDataObject($payloadData);
 
         return new LogDataRecord(
             type: $type,
@@ -60,7 +56,11 @@ final class LoggerTest extends UnitTestCase
 
     public function test_info_creates_info_level_log_record(): void
     {
-        $payloadData = [1, 'user_login', '127.0.0.1'];
+        $payloadData = [
+            'user_id' => 1,
+            'action' => 'user_login',
+            'ip' => '127.0.0.1',
+        ];
         $logData = $this->createLogDataRecord('user_login', $payloadData);
 
         $this->writeTask->expects($this->once())
@@ -75,7 +75,10 @@ final class LoggerTest extends UnitTestCase
 
     public function test_warning_creates_warning_level_log_record(): void
     {
-        $payloadData = ['system_warning', 'High memory usage'];
+        $payloadData = [
+            'type' => 'system_warning',
+            'message' => 'High memory usage',
+        ];
         $logData = $this->createLogDataRecord('system_warning', $payloadData);
 
         $this->writeTask->expects($this->once())
@@ -90,7 +93,11 @@ final class LoggerTest extends UnitTestCase
 
     public function test_error_creates_error_level_log_record(): void
     {
-        $payloadData = ['payment_failed', 12345, 99.99];
+        $payloadData = [
+            'event' => 'payment_failed',
+            'payment_id' => 12345,
+            'amount' => 99.99,
+        ];
         $logData = $this->createLogDataRecord('payment_failed', $payloadData);
 
         $this->writeTask->expects($this->once())
@@ -105,7 +112,10 @@ final class LoggerTest extends UnitTestCase
 
     public function test_debug_creates_debug_level_log_record(): void
     {
-        $payloadData = ['debug_info', 'test value'];
+        $payloadData = [
+            'info' => 'debug_info',
+            'value' => 'test value',
+        ];
         $logData = $this->createLogDataRecord('debug_info', $payloadData);
 
         $this->writeTask->expects($this->once())
@@ -120,8 +130,11 @@ final class LoggerTest extends UnitTestCase
 
     public function test_log_calls_write_task_directly(): void
     {
-        $payload = new MixedPayloadCollection;
-        $payload->add('test', 42, true);
+        $payload = new StrictDataObject([
+            'test' => 'test',
+            'number' => 42,
+            'active' => true,
+        ]);
 
         $logData = new LogDataRecord(type: 'test', payload: $payload);
 
@@ -140,10 +153,10 @@ final class LoggerTest extends UnitTestCase
 
     public function test_query_delegates_to_query_task(): void
     {
-        $dateRange = $this->getDateRange();
+        $currentDate = date('Y-m-d');
         $query = new LogQueryRecord(
-            from: $dateRange['from'],
-            to: $dateRange['to'],
+            from: $currentDate . 'T00:00:00Z',
+            to: $currentDate . 'T23:59:59Z',
             type: 'user_login',
             level: null,
         );
@@ -223,10 +236,10 @@ final class LoggerTest extends UnitTestCase
 
         $this->logger->enableBuffer(50);
 
-        $dateRange = $this->getDateRange();
+        $currentDate = date('Y-m-d');
         $query = new LogQueryRecord(
-            from: $dateRange['from'],
-            to: $dateRange['to'],
+            from: $currentDate . 'T00:00:00Z',
+            to: $currentDate . 'T23:59:59Z',
             type: 'user_login',
             level: null,
         );
@@ -262,7 +275,7 @@ final class LoggerTest extends UnitTestCase
 
     public function test_log_without_buffer_writes_immediately(): void
     {
-        $logData = $this->createLogDataRecord('test', [1]);
+        $logData = $this->createLogDataRecord('test', ['value' => 1]);
 
         $this->writeTask->expects($this->once())
             ->method('execute');
@@ -276,7 +289,7 @@ final class LoggerTest extends UnitTestCase
 
         $this->logger->enableBuffer(100);
 
-        $logData = $this->createLogDataRecord('test', [1]);
+        $logData = $this->createLogDataRecord('test', ['value' => 1]);
         $this->logger->info($logData);
     }
 }

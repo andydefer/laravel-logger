@@ -4,156 +4,56 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Services;
 
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
-use AndyDefer\Logger\Enums\LogLevel;
-use AndyDefer\Logger\Records\LogDataRecord;
+use AndyDefer\DomainStructures\Normalizers\NormalizerChain;
 use AndyDefer\Logger\Records\LogRecord;
-use AndyDefer\Records\AbstractRecord;
-use AndyDefer\Records\Collections\TypedCollection;
-use InvalidArgumentException;
-use stdClass;
 
+/**
+ * Service for serializing and deserializing log records to/from JSON.
+ *
+ * Handles conversion of LogRecord objects to JSON lines and back,
+ * using the built-in hydration and normalization capabilities.
+ *
+ * @author Andy Defer
+ */
 final class LogSerializerService
 {
     /**
-     * Sérialise un LogRecord en JSON.
+     * Serializes a LogRecord to a JSON line.
+     *
+     * @param  LogRecord  $record  The log record to serialize
+     * @return string JSON representation of the log record with newline
      */
     public function serialize(LogRecord $record): string
     {
-        $logEntry = [
-            'time' => $record->time,
-            'level' => $record->level->value,
-            'data' => [
-                'type' => $record->data->type,
-                'payload' => $this->serializePayload($record->data->payload),
-            ],
-        ];
+        $normalized = NormalizerChain::get()->normalize($record);
 
-        return json_encode($logEntry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+        return json_encode($normalized, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
     }
 
     /**
-     * Sérialise un payload en array pour JSON.
-     */
-    private function serializePayload(MixedPayloadCollection $payload): array
-    {
-        $result = [];
-        foreach ($payload as $item) {
-            if ($item instanceof AbstractRecord) {
-                $result[] = $item->toArray();
-            } elseif ($item instanceof TypedCollection) {
-                $result[] = $this->serializeTypedRecords($item);
-            } elseif ($item instanceof stdClass) {
-                $result[] = (array) $item;
-            } else {
-                $result[] = $item;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Sérialise une collection TypedRecords.
-     */
-    private function serializeTypedRecords(TypedCollection $collection): array
-    {
-        $result = [];
-        foreach ($collection as $item) {
-            if ($item instanceof AbstractRecord) {
-                $result[] = $item->toArray();
-            } elseif ($item instanceof TypedCollection) {
-                $result[] = $this->serializeTypedRecords($item);
-            } elseif ($item instanceof stdClass) {
-                $result[] = (array) $item;
-            } else {
-                $result[] = $item;
-            }
-        }
-
-        return $result;
-    }
-
-    /**
-     * Désérialise une ligne JSON en LogRecord.
+     * Deserializes a JSON line into a LogRecord.
+     *
+     * @param  string  $line  The JSON line to deserialize
+     * @return LogRecord|null The deserialized log record, or null if invalid
      */
     public function deserialize(string $line): ?LogRecord
     {
-        $data = json_decode($line);
-
-        if (! is_object($data)) {
-            return null;
-        }
-
-        if (! isset($data->time, $data->level, $data->data)) {
-            return null;
-        }
-
-        $level = LogLevel::fromValue($data->level);
-        if ($level === null) {
-            return null;
-        }
-
-        if (! isset($data->data->type, $data->data->payload)) {
-            return null;
-        }
-
-        if (! is_array($data->data->payload)) {
-            return null;
-        }
-
         try {
-            $payload = new MixedPayloadCollection;
-
-            foreach ($data->data->payload as $item) {
-                if (is_array($item)) {
-                    // Un tableau devient un stdClass (objet simple)
-                    $payload->add((object) $item);
-                } elseif (is_object($item)) {
-                    // Déjà un objet (stdClass de json_decode)
-                    $payload->add($item);
-                } else {
-                    // Scalaire
-                    $payload->add($item);
-                }
-            }
-
-            $logData = new LogDataRecord(
-                type: $data->data->type,
-                payload: $payload,
-            );
-        } catch (InvalidArgumentException $e) {
+            $data = json_decode($line, true, 512, JSON_THROW_ON_ERROR);
+            return LogRecord::from($data);
+        } catch (\Exception $e) {
             return null;
         }
-
-        return new LogRecord(
-            time: $data->time,
-            level: $level,
-            data: $logData,
-        );
     }
 
     /**
-     * Valide qu'une ligne JSON est un log valide.
+     * Validates that a JSON line is a valid log entry.
+     *
+     * @param  string  $line  The JSON line to validate
+     * @return bool True if the line is a valid log entry, false otherwise
      */
     public function isValidLogLine(string $line): bool
     {
-        $data = json_decode($line);
-
-        if (! is_object($data)) {
-            return false;
-        }
-
-        if (! isset($data->time, $data->level, $data->data)) {
-            return false;
-        }
-
-        if (! isset($data->data->type, $data->data->payload)) {
-            return false;
-        }
-
-        $level = LogLevel::fromValue($data->level);
-
-        return $level !== null;
+        return $this->deserialize($line) !== null;
     }
 }

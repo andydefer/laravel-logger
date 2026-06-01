@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Fixtures\Records;
 
-use AndyDefer\Records\Collections\TypedCollection;
-use AndyDefer\Records\AbstractRecord;
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+use AndyDefer\DomainStructures\Collections\Core\TypedCollection;
+use AndyDefer\DomainStructures\Collections\Utility\StringTypedCollection;
 use stdClass;
 
 /**
@@ -24,7 +25,7 @@ final class TestValidationRecord extends AbstractRecord
         public readonly string $validString = 'default',
         public readonly int $validInt = 0,
         public readonly TypedCollection $validCollection = new TypedCollection('string'),
-        public readonly ?TypedCollection $invalidNullableCollection = new TypedCollection('string'),
+        public readonly ?StringTypedCollection $invalidNullableCollection = new TypedCollection('string'),
         public readonly TypedCollection|stdClass $invalidUnionCollection = new TypedCollection('string'),
         public readonly array $invalidArray = [],
     ) {
