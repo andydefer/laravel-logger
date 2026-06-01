@@ -1,13 +1,3 @@
-# Laravel Logger
-
-**Un package de logging structuré pour Laravel qui écrit les logs au format JSONL (JSON Lines).**
-
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue)](https://php.net)
-[![Laravel Version](https://img.shields.io/badge/Laravel-12.x%20%7C%2013.x%20%7C%2014.x%20%7C%2015.x-blue)](https://laravel.com)
-[![License](https://img.shields.io/badge/Licence-MIT-green)](LICENSE)
-
----
-
 ## Installation
 
 ```bash
@@ -38,7 +28,7 @@ php artisan vendor:publish --tag=logger-config
 ## Premier log
 
 ```php
-use AndyDefer\Logger\Collections\MixedPayloadCollection;
+use AndyDefer\DomainStructures\Utils\StrictDataObject;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Contracts\LoggerInterface;
 
@@ -50,8 +40,12 @@ class UserController extends Controller
     
     public function login()
     {
-        $payload = new MixedPayloadCollection();
-        $payload->add('user_login', 123, '127.0.0.1', true);
+        $payload = new StrictDataObject([
+            'event' => 'user_login',
+            'user_id' => 123,
+            'ip' => '127.0.0.1',
+            'success' => true,
+        ]);
 
         $logData = new LogDataRecord(type: 'auth', payload: $payload);
 
@@ -62,8 +56,11 @@ class UserController extends Controller
 
 **Résultat dans le fichier de log :**
 ```json
-{"time":"2026-04-05T10:26:00Z","level":"info","data":{"type":"auth","payload":["user_login",123,"127.0.0.1",true]}}
+{"time":"2026-04-05T10:26:00Z","level":"info","data":{"type":"auth","payload":{"event":"user_login","user_id":123,"ip":"127.0.0.1","success":true}}}
 ```
+
+> ⚠️ Le payload utilise `StrictDataObject` qui préserve exactement les noms de clés (camelCase ou snake_case). Le timestamp est automatique.
+
 ---
 
 ## Les 4 niveaux de log
@@ -75,110 +72,64 @@ $logger->warning($logData); // WARNING
 $logger->error($logData);   // ERROR
 ```
 
-> Le timestamp est automatique.
-
 ---
 
-## Types acceptés dans un payload
+## Types de payload
+
+`StrictDataObject` accepte n'importe quelle structure clé-valeur :
 
 | Type | Exemple |
 |------|---------|
-| `int` | `$payload->add(123)` |
-| `float` | `$payload->add(99.99)` |
-| `string` | `$payload->add('hello')` |
-| `bool` | `$payload->add(true)` |
-| `null` | `$payload->add(null)` |
-| `AbstractRecord` | `$payload->add($userRecord)` |
-| `TypedCollection` | `$payload->add($tags)` |
-
-> La méthode `add()` accepte plusieurs paramètres : `$payload->add('user_login', 123, '127.0.0.1', true)`
+| `int` | `'user_id' => 123` |
+| `float` | `'amount' => 99.99` |
+| `string` | `'ip' => '127.0.0.1'` |
+| `bool` | `'success' => true` |
+| `null` | `'optional' => null` |
+| `array` | `'tags' => ['premium', 'vip']` |
+| `AbstractRecord` | `'user' => $userRecord` |
+| `TypedCollection` | `'items' => $collection` |
 
 ---
 
 ## Travailler avec le payload
 
-### Lire des éléments
+### Lire des propriétés
 
 ```php
-$first = $payload->firstItem();      // Premier élément
-$last = $payload->lastItem();        // Dernier élément
-$array = $payload->toArray();        // Tout en tableau
+$userId = $log->data->payload->user_id;      // Accès direct
+$ip = $log->data->payload->ip;               // via propriété
+$value = $log->data->payload->get('key');    // avec valeur par défaut
+$hasKey = $log->data->payload->has('key');   // Vérifier existence
 ```
 
-### Compter
+### Convertir en tableau
 
 ```php
-$count = $payload->count();           // Nombre d'éléments
-$isEmpty = $payload->isEmpty();       // Collection vide ?
-$isNotEmpty = $payload->isNotEmpty(); // Collection non vide ?
+$array = $log->data->payload->toArray();
+// ['event' => 'user_login', 'user_id' => 123, ...]
 ```
 
-### Filtrer
+### Immuabilité - Créer une nouvelle version
 
 ```php
-// Éléments > 3
-$filtered = $payload->filter(fn($item) => $item > 3);
-
-// Uniquement les strings
-$strings = $payload->ofType('string');
-
-// Uniquement les entiers
-$ints = $payload->ofType('int');
-
-// Uniquement les scalaires
-$scalars = $payload->scalars();
-
-// Uniquement les Records
-$records = $payload->records();
-```
-
-### Transformer
-
-```php
-// Doubler chaque élément
-$doubles = $payload->map(fn($item) => $item * 2);
-
-// Supprimer les doublons
-$unique = $payload->unique();
-
-// Mélanger
-$shuffled = $payload->shuffle();
-```
-
-### Calculs (pour collections numériques)
-
-```php
-$total = $payload->sum();     // Somme
-$moyenne = $payload->avg();   // Moyenne
-$max = $payload->max();       // Maximum
-$min = $payload->min();       // Minimum
-```
-
-### Vérifications
-
-```php
-// Un élément existe ?
-if ($payload->contains(123)) { ... }
-
-// Tous sont du même type ?
-if ($payload->isHomogeneous()) { ... }
-
-// Tous sont des entiers ?
-$payload->assertAllOfType('int');
+$newPayload = $payload->with('status', 'completed');  // Ajoute/modifie
+$merged = $payload->merge(['new_key' => 'value']);    // Fusionne
+$reduced = $payload->without('temp_key');              // Supprime
 ```
 
 ---
 
-## Rechercher des logs
+## Requêter les logs
 
 ### Query par type d'événement
 
 ```php
 use AndyDefer\Logger\Records\LogQueryRecord;
+use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 
 $query = new LogQueryRecord(
-    from: '2026-04-05T00:00:00Z',
-    to: '2026-04-05T23:59:59Z',
+    from: new IsoZuluTime('2026-04-05T00:00:00Z'),
+    to: new IsoZuluTime('2026-04-05T23:59:59Z'),
     type: 'user_login',
 );
 
@@ -191,6 +142,8 @@ $results = $logger->query($query);
 use AndyDefer\Logger\Enums\LogLevel;
 
 $query = new LogQueryRecord(
+    from: new IsoZuluTime('2026-04-01T00:00:00Z'),
+    to: new IsoZuluTime('2026-04-30T23:59:59Z'),
     level: LogLevel::ERROR,
 );
 
@@ -200,8 +153,11 @@ $errors = $logger->query($query);
 ### Query combinée
 
 ```php
+$from = new IsoZuluTime(now()->subDay()->toIso8601ZuluString());
+
 $query = new LogQueryRecord(
-    from: now()->subDay()->toIso8601ZuluString(),
+    from: $from,
+    to: new IsoZuluTime(now()->toIso8601ZuluString()),
     type: 'payment_failed',
     level: LogLevel::ERROR,
 );
@@ -213,13 +169,10 @@ $failedPayments = $logger->query($query);
 
 ```php
 foreach ($results as $log) {
-    echo $log->time . "\n";
+    echo $log->time->getValue() . "\n";
     echo $log->level->value . "\n";
     echo $log->data->type . "\n";
-    
-    foreach ($log->data->payload as $item) {
-        echo $item . "\n";
-    }
+    echo $log->data->payload->user_id . "\n";
 }
 ```
 
@@ -283,73 +236,6 @@ $logger->onFlush(function ($count) {
 
 ---
 
-## Exemples concrets
-
-### Authentification
-
-```php
-// Connexion réussie
-$payload = new MixedPayloadCollection();
-$payload->add('user_login', $user->id, request()->ip(), true);
-
-$logger->info(new LogDataRecord(type: 'auth', payload: $payload));
-
-// Échec de connexion
-$payload = new MixedPayloadCollection();
-$payload->add('user_login_failed', request()->email, request()->ip(), 'invalid_password');
-
-$logger->warning(new LogDataRecord(type: 'auth', payload: $payload));
-```
-
-### Paiement
-
-```php
-// Paiement réussi
-$payload = new MixedPayloadCollection();
-$payload->add('payment_success', $order->id, $stripeId, $order->total);
-
-$logger->info(new LogDataRecord(type: 'payment', payload: $payload));
-
-// Paiement échoué
-$payload = new MixedPayloadCollection();
-$payload->add('payment_failed', $order->id, $exception->getMessage());
-
-$logger->error(new LogDataRecord(type: 'payment', payload: $payload));
-```
-
-### Log avec un Record personnalisé
-
-```php
-use AndyDefer\Records\AbstractRecord;
-
-final class UserRecord extends AbstractRecord
-{
-    public function __construct(
-        public readonly int $id,
-        public readonly string $email,
-        public readonly string $role,
-    ) {}
-}
-
-$userRecord = new UserRecord(id: 1, email: 'john@example.com', role: 'admin');
-
-$payload = new MixedPayloadCollection();
-$payload->add('user_created', $userRecord);
-
-$logger->info(new LogDataRecord(type: 'user', payload: $payload));
-```
-
-### Log d'API externe
-
-```php
-$payload = new MixedPayloadCollection();
-$payload->add('api_call', 'stripe', '/v1/customers', 'POST', json_encode($data));
-
-$logger->info(new LogDataRecord(type: 'api', payload: $payload));
-```
-
----
-
 ## Commandes avec la directive
 
 Le package intègre une directive pour nettoyer les vieux logs.
@@ -387,12 +273,12 @@ Current statistics:
   Size: 12.5 MB
   Lines: 15230
   Range: 2024-01-01 to 2024-01-31
-  Path: storage/logs/directives
+  Path: storage/logs/structured
 
 Files to delete:
-  - 2024-01-01/00 (1024 bytes)
-  - 2024-01-01/01 (2048 bytes)
-  - 2024-01-02/00 (512 bytes)
+  - 2024-01-01/00-01 (1024 bytes)
+  - 2024-01-01/01-02 (2048 bytes)
+  - 2024-01-02/00-01 (512 bytes)
 
 ⚠️ Dry run mode - no files will be deleted
 Would delete files older than 2024-01-01
@@ -403,6 +289,81 @@ Would delete 15 file(s)
 
 ```bash
 ./vendor/bin/directive --list
+```
+
+---
+
+## Exemples concrets
+
+### Authentification
+
+```php
+// Connexion réussie
+$payload = new StrictDataObject([
+    'event' => 'user_login',
+    'user_id' => $user->id,
+    'ip' => request()->ip(),
+    'success' => true,
+]);
+
+$logger->info(new LogDataRecord(type: 'auth', payload: $payload));
+
+// Échec de connexion
+$payload = new StrictDataObject([
+    'event' => 'user_login_failed',
+    'email' => request()->email,
+    'ip' => request()->ip(),
+    'reason' => 'invalid_password',
+]);
+
+$logger->warning(new LogDataRecord(type: 'auth', payload: $payload));
+```
+
+### Paiement
+
+```php
+// Paiement réussi
+$payload = new StrictDataObject([
+    'event' => 'payment_success',
+    'order_id' => $order->id,
+    'stripe_id' => $stripeId,
+    'amount' => $order->total,
+]);
+
+$logger->info(new LogDataRecord(type: 'payment', payload: $payload));
+
+// Paiement échoué
+$payload = new StrictDataObject([
+    'event' => 'payment_failed',
+    'order_id' => $order->id,
+    'error' => $exception->getMessage(),
+]);
+
+$logger->error(new LogDataRecord(type: 'payment', payload: $payload));
+```
+
+### Log avec un Record personnalisé
+
+```php
+use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
+
+final class UserRecord extends AbstractRecord
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $email,
+        public readonly string $role,
+    ) {}
+}
+
+$userRecord = new UserRecord(id: 1, email: 'john@example.com', role: 'admin');
+
+$payload = new StrictDataObject([
+    'event' => 'user_created',
+    'user' => $userRecord,
+]);
+
+$logger->info(new LogDataRecord(type: 'user', payload: $payload));
 ```
 
 ---
@@ -426,8 +387,7 @@ class UserServiceTest extends TestCase
             ->method('info')
             ->with($this->callback(function ($logData) {
                 return $logData->type === 'auth'
-                    && $logData->payload->contains('user_login')
-                    && $logData->payload->contains(123);
+                    && $logData->payload->user_id === 123;
             }));
         
         $service = new UserService($logger);
@@ -442,9 +402,9 @@ class UserServiceTest extends TestCase
 // ✅ BON - Test robuste
 $logger->expects($this->once())
     ->method('info')
-    ->with($this->callback(fn($log) => $log->payload->contains(123)));
+    ->with($this->callback(fn($log) => $log->payload->user_id === 123));
 
-// ❌ MAUVAIS - Fragile (Laravel natif)
+// ❌ MAUVAIS - Fragile
 $logger->expects($this->once())
     ->method('info')
     ->with('User 123 logged in');
@@ -476,14 +436,21 @@ LogLevel::fromValue('info'); // LogLevel::INFO
 
 ## Bonnes pratiques
 
-### 1. Premier élément = type d'événement
+### 1. Première propriété = type d'événement
 
 ```php
 // ✅
-$payload->add('user_login', $userId, $ip, $success);
+$payload = new StrictDataObject([
+    'event' => 'user_login',
+    'user_id' => $userId,
+    'ip' => $ip,
+]);
 
 // ❌
-$payload->add($userId, 'user_login', $ip);
+$payload = new StrictDataObject([
+    'user_id' => $userId,
+    'event' => 'user_login',
+]);
 ```
 
 ### 2. snake_case pour les types
@@ -516,9 +483,9 @@ class MyService
 
 ```php
 // ✅ Tester la présence des données
-$log->payload->contains(123)
+$log->payload->user_id === 123
 
-// ❌ Tester du texte (Laravel natif)
+// ❌ Tester du texte
 str_contains($log, 'User 123')
 ```
 
@@ -530,8 +497,12 @@ str_contains($log, 'User 123')
 
 ```php
 // ✅ Le log parfait
-$payload = new MixedPayloadCollection();
-$payload->add('user_login', $userId, $ip, true);
+$payload = new StrictDataObject([
+    'event' => 'user_login',
+    'user_id' => $userId,
+    'ip' => $ip,
+    'success' => true,
+]);
 
 $logger->info(new LogDataRecord(type: 'auth', payload: $payload));
 ```
@@ -542,7 +513,7 @@ $logger->expects($this->once())
     ->method('info')
     ->with($this->callback(fn($log) => 
         $log->type === 'auth' 
-        && $log->payload->contains($userId)
+        && $log->payload->user_id === $userId
     ));
 ```
 
@@ -558,7 +529,6 @@ $logger->expects($this->once())
 | **Types non préservés** | `Log::info('message', ['user' => $user])` → `"Array"` | Perte d'information, données inexploitables |
 | **Pas de requêtage** | On ne peut chercher que par texte | Impossible de filtrer par type d'événement ou par niveau |
 | **Tests fragiles** | `assertStringContainsString('User 123', $log)` | Un simple changement de texte casse les tests |
-| **Pas de séparation sémantique** | Message et contexte mélangés | Impossible d'extraire proprement les données |
 | **Format non standard** | Format propriétaire Laravel | Difficile à intégrer avec des outils externes (ELK, Loki, Datadog) |
 
 ### Les avantages de ce package
@@ -567,8 +537,8 @@ $logger->expects($this->once())
 |----------|-------------|
 | **Format JSONL standard** | Chaque ligne est un JSON valide, compatible avec tous les outils |
 | **Types préservés** | Les entiers, booléens, objets restent typés |
-| **Requêtage puissant** | Filtrage par type, niveau, plage de dates |
-| **Tests robustes** | On teste la structure, pas le texte |
+| **Requêtage puissant** | Filtrage par type, niveau, plage de dates avec `IsoZuluTime` |
+| **Tests robustes** | On teste la structure (`$log->payload->user_id`), pas le texte |
 | **Séparation claire** | `type` = événement, `payload` = données |
 | **Performance** | Buffer d'écriture, organisation par heure |
 | **Maintenance automatique** | Nettoyage des vieux logs configurable |
@@ -582,14 +552,21 @@ Log::info("Utilisateur {$user->id} connecté", ['ip' => $ip]);
 // Sortie: [2024-01-15 14:30:00] local.INFO: Utilisateur 123 connecté {"ip":"127.0.0.1"}
 
 // ✅ Ce package - Structure complète
-$payload = new MixedPayloadCollection();
-$payload->add('user_login', $user->id, $ip, true);
+$payload = new StrictDataObject([
+    'event' => 'user_login',
+    'user_id' => $user->id,
+    'ip' => $ip,
+    'success' => true,
+]);
 
 $logger->info(new LogDataRecord(type: 'auth', payload: $payload));
-// Sortie: {"time":"2024-01-15T14:30:00Z","level":"info","data":{"type":"auth","payload":["user_login",123,"127.0.0.1",true]}}
+// Sortie: {"time":"2024-01-15T14:30:00Z","level":"info","data":{"type":"auth","payload":{"event":"user_login","user_id":123,"ip":"127.0.0.1","success":true}}}
 ```
+
+---
 
 ## Licence
 
 MIT © [Andy Defer](https://github.com/andydefer)
 ```
+---
