@@ -14,6 +14,7 @@ use AndyDefer\Logger\Services\LogSerializerService;
 use AndyDefer\Logger\Tasks\QueryLogsTask;
 use AndyDefer\Logger\Tasks\StreamLogsTask;
 use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 use AndyDefer\Logger\ValueObjects\LoggerConfig;
 use Illuminate\Support\ServiceProvider;
 
@@ -127,7 +128,7 @@ final class LoggerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__.'/../../config/logger.php' => config_path('logger.php'),
+            __DIR__ . '/../../config/logger.php' => config_path('logger.php'),
         ], 'logger-config');
 
         $this->registerAutoCleanup();
@@ -138,7 +139,14 @@ final class LoggerServiceProvider extends ServiceProvider
         $this->app->terminating(function () {
             $cleaner = $this->app->make(LogCleanerService::class);
             $config = $this->app->make(LoggerConfig::class);
-            $cutoffDate = date('Y-m-d', strtotime('-'.$config->retentionDays.' days'));
+
+            // Calculer la date de coupure
+            $cutoffDateString = date('Y-m-d', strtotime('-' . $config->retentionDays . ' days'));
+
+            // Convertir la string en IsoZuluTime
+            // On ajoute 'T00:00:00Z' pour avoir un timestamp complet valide
+            $cutoffDate = new IsoZuluTime($cutoffDateString . 'T00:00:00Z');
+
             $cleaner->cleanWithCutoff($cutoffDate);
         });
     }
