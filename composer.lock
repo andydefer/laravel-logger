@@ -59,16 +59,16 @@
         },
         {
             "name": "andydefer/laravel-directive",
-            "version": "3.6.0",
+            "version": "3.6.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-directive.git",
-                "reference": "9442f5ca3089890dc4a5bb0fb70d695cc5f7cc0a"
+                "reference": "54d9d3327eabed801a2a2732f9c179a43916e609"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/9442f5ca3089890dc4a5bb0fb70d695cc5f7cc0a",
-                "reference": "9442f5ca3089890dc4a5bb0fb70d695cc5f7cc0a",
+                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/54d9d3327eabed801a2a2732f9c179a43916e609",
+                "reference": "54d9d3327eabed801a2a2732f9c179a43916e609",
                 "shasum": ""
             },
             "require": {
@@ -116,9 +116,9 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/3.6.0"
+                "source": "https://github.com/andydefer/laravel-directive/tree/3.6.1"
             },
-            "time": "2026-06-02T11:18:04+00:00"
+            "time": "2026-06-02T20:47:49+00:00"
         },
         {
             "name": "brick/math",
