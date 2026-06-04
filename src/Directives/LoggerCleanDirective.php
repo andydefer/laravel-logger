@@ -198,12 +198,4 @@ final class LoggerCleanDirective extends AbstractDirective
         $this->line("  Files: {$newStats->totalFiles}");
         $this->line("  Size: {$newStats->totalSizeMb} MB");
     }
-
-    /**
-     * Output an empty line for visual separation.
-     */
-    private function newLine(): void
-    {
-        $this->line('');
-    }
 }
