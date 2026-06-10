@@ -1,5 +1,5 @@
 # Pint Formatting Test Report
-*Generated: jeu. 04 juin 2026 08:49:34 WAT*
+*Generated: mer. 10 juin 2026 21:42:15 WAT*
 
 
   .....⨯...⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯.⨯..⨯.⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯⨯............⨯..
@@ -12,7 +12,7 @@
   ⨯ src/Contracts/LoggerInterface.php                                                                                                                                     phpdoc_align  
   ⨯ src/Directives/LoggerCleanDirective.php                                                               concat_space, not_operator_with_successor_space, blank_line_before_statement  
   ⨯ src/Logger.php                                                                                  class_attributes_separation, braces_position, single_line_empty_body, phpdoc_align  
-  ⨯ src/LoggerServiceProvider.php                                                                                                                                         concat_space  
+  ⨯ src/LoggerServiceProvider.php                                                                                                                      concat_space, no_unused_imports  
   ⨯ src/Records/LogQueryRecord.php                                                                                               braces_position, single_line_empty_body, phpdoc_align  
   ⨯ src/Services/LogBufferService.php                                                                                                  not_operator_with_successor_space, phpdoc_align  
   ⨯ src/Services/LogCleanerService.php             concat_space, braces_position, not_operator_with_successor_space, single_line_empty_body, blank_line_before_statement, phpdoc_align  
@@ -28,7 +28,7 @@
   ⨯ tests/Fixtures/Enums/TestUserRole.php                                                                                                                           no_empty_statement  
   ⨯ tests/Integration/Config/LoggerConfigTest.php                                                                                         class_attributes_separation, ordered_imports  
   ⨯ tests/Integration/LoggerServiceProviderTest.php                                                                                                                    ordered_imports  
-  ⨯ tests/Unit/Directives/LoggerCleanDirectiveTest.php                                new_with_parentheses, fully_qualified_strict_types, blank_line_before_statement, ordered_imports  
+  ⨯ tests/Unit/Directives/LoggerCleanDirectiveTest.php             fully_qualified_strict_types, no_unused_imports, no_extra_blank_lines, blank_line_before_statement, ordered_imports  
   ⨯ tests/Unit/LoggerTest.php                                                                                   class_attributes_separation, concat_space, blank_line_before_statement  
   ⨯ tests/Unit/Services/LogBufferServiceTest.php                                                          class_attributes_separation, concat_space, not_operator_with_successor_space  
   ⨯ tests/Unit/Services/LogCleanerServiceTest.php                                                         class_attributes_separation, concat_space, not_operator_with_successor_space  

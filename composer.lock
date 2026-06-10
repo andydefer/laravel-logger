@@ -59,20 +59,21 @@
         },
         {
             "name": "andydefer/laravel-directive",
-            "version": "v3.7.0",
+            "version": "v3.15.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-directive.git",
-                "reference": "4d21881405a62ee9c715bc7f24c57ae7859e3aff"
+                "reference": "6996b52a99a0f1e95b61336f10a531a8d75dd68a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/4d21881405a62ee9c715bc7f24c57ae7859e3aff",
-                "reference": "4d21881405a62ee9c715bc7f24c57ae7859e3aff",
+                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/6996b52a99a0f1e95b61336f10a531a8d75dd68a",
+                "reference": "6996b52a99a0f1e95b61336f10a531a8d75dd68a",
                 "shasum": ""
             },
             "require": {
                 "andydefer/domain-structures": "^1.14",
+                "andydefer/php-vo": "^0.8.0",
                 "laravel/framework": "^12.0|^13.0|^14.0|^15.0",
                 "php": ">=8.1"
             },
@@ -116,9 +117,55 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/v3.7.0"
+                "source": "https://github.com/andydefer/laravel-directive/tree/v3.15.0"
             },
-            "time": "2026-06-08T14:06:18+00:00"
+            "time": "2026-06-10T20:37:32+00:00"
+        },
+        {
+            "name": "andydefer/php-vo",
+            "version": "0.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/andydefer/php-vo.git",
+                "reference": "b7175428f50261d1166decd4561206ee3137dcf5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/andydefer/php-vo/zipball/b7175428f50261d1166decd4561206ee3137dcf5",
+                "reference": "b7175428f50261d1166decd4561206ee3137dcf5",
+                "shasum": ""
+            },
+            "require": {
+                "andydefer/domain-structures": "^1.3",
+                "php": ">=8.1"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.6",
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpunit/phpunit": "^10.5|^11.0|^12.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "AndyDefer\\PhpVo\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andy Defer",
+                    "email": "andykanidimbu@gmail.com"
+                }
+            ],
+            "description": "A collection of reusable Value Objects and Enums for PHP applications (Email, Money, Address, PostalCode, Iso8601DateTime, Currency, etc.)",
+            "support": {
+                "issues": "https://github.com/andydefer/php-vo/issues",
+                "source": "https://github.com/andydefer/php-vo/tree/0.8.0"
+            },
+            "time": "2026-06-08T03:19:23+00:00"
         },
         {
             "name": "brick/math",

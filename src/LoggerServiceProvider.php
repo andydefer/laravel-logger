@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger;
 
+use AndyDefer\Directive\Contexts\DirectiveContext;
 use AndyDefer\Directive\Services\DirectiveInteractionService;
 use AndyDefer\Directive\Services\LaravelBootstrapper;
 use AndyDefer\Logger\Contracts\LoggerInterface;
@@ -117,10 +118,10 @@ final class LoggerServiceProvider extends ServiceProvider
     {
         $this->app->singleton(LoggerCleanDirective::class, function ($app) {
             return new LoggerCleanDirective(
+                $app->make(DirectiveContext::class),
                 $app->make(DirectiveInteractionService::class),
                 $app->make(LogCleanerService::class),
                 $app->make(LogPathService::class),
-                $app->make(LaravelBootstrapper::class),
             );
         });
     }

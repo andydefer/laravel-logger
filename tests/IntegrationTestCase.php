@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests;
 
+use AndyDefer\Directive\DirectiveServiceProvider;
 use AndyDefer\Logger\LoggerServiceProvider;
 use Carbon\Carbon;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -39,6 +40,7 @@ abstract class IntegrationTestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
+            DirectiveServiceProvider::class,
             LoggerServiceProvider::class,
         ];
     }

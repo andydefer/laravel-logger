@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace AndyDefer\Logger\Directives;
 
 use AndyDefer\Directive\AbstractDirective;
+use AndyDefer\Directive\Contexts\DirectiveContext;
 use AndyDefer\Directive\Enums\ExitCode;
 use AndyDefer\Directive\Services\DirectiveInteractionService;
-use AndyDefer\Directive\Services\LaravelBootstrapper;
 use AndyDefer\DomainStructures\Collections\Utility\StringTypedCollection;
 use AndyDefer\Logger\Services\LogCleanerService;
 use AndyDefer\Logger\Services\LogPathService;
@@ -27,12 +27,12 @@ final class LoggerCleanDirective extends AbstractDirective
     private const DEFAULT_RETENTION_DAYS = 30;
 
     public function __construct(
+        DirectiveContext $context,
         DirectiveInteractionService $interaction,
         private readonly LogCleanerService $cleaner,
         private readonly LogPathService $pathService,
-        ?LaravelBootstrapper $laravelBootstrapper = null,
     ) {
-        parent::__construct($interaction, $laravelBootstrapper);
+        parent::__construct($context, $interaction);
     }
 
     /**
@@ -57,7 +57,8 @@ final class LoggerCleanDirective extends AbstractDirective
     public function getAliases(): StringTypedCollection
     {
         $aliases = new StringTypedCollection;
-        $aliases->add('log-clean', 'clean-logs');
+        $aliases->add('log-clean');
+        $aliases->add('clean-logs');
 
         return $aliases;
     }
