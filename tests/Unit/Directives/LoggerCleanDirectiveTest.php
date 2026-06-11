@@ -84,14 +84,14 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
     {
         $response = $this->service->run(LoggerCleanDirective::class);
 
-        $this->assertSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $response->exit_code);
     }
 
     public function test_execute_with_dry_run_option(): void
     {
         $response = $this->service->run(LoggerCleanDirective::class, ['--dry-run']);
 
-        $this->assertSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $response->exit_code);
         $this->assertStringContainsString('Dry run mode', $response->output);
         $this->assertStringContainsString('no files will be deleted', $response->output);
     }
@@ -100,21 +100,21 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
     {
         $response = $this->service->run(LoggerCleanDirective::class, ['--verbose']);
 
-        $this->assertSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $response->exit_code);
     }
 
     public function test_execute_with_custom_days(): void
     {
         $response = $this->service->run(LoggerCleanDirective::class, ['--days=60']);
 
-        $this->assertSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $response->exit_code);
     }
 
     public function test_execute_with_dry_run_and_verbose(): void
     {
         $response = $this->service->run(LoggerCleanDirective::class, ['--dry-run', '--verbose']);
 
-        $this->assertSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $response->exit_code);
         $this->assertStringContainsString('Dry run mode', $response->output);
         $this->assertStringContainsString('no files will be deleted', $response->output);
     }
@@ -134,7 +134,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         $response = $this->service->runDirective('test:clean');
 
         $this->assertTrue($executed);
-        $this->assertSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $response->exit_code);
         $this->assertStringContainsString('Test cleaning executed', $response->output);
     }
 
@@ -143,7 +143,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
     public function test_register_multiple_directives(): void
     {
         $response = $this->service->run(LoggerCleanDirective::class);
-        $this->assertSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $response->exit_code);
     }
 
     public function test_clear_registered_directives_removes_directive_from_registry(): void
@@ -154,7 +154,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
 
         // Vérifier que la directive est accessible
         $responseBefore = $this->service->runDirective('logger-clean');
-        $this->assertSame(ExitCode::SUCCESS, $responseBefore->exitCode);
+        $this->assertSame(ExitCode::SUCCESS, $responseBefore->exit_code);
 
         // Vider le registre
         $this->service->clearRegisteredDirectives();
@@ -162,7 +162,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         // Vérifier que la directive n'est plus trouvée (ne PAS utiliser run() car elle ré-enregistrerait)
         // Utiliser runDirective() qui ne fait que chercher sans ré-enregistrer
         $responseAfter = $this->service->runDirective('logger-clean');
-        $this->assertSame(ExitCode::NOT_FOUND, $responseAfter->exitCode);
+        $this->assertSame(ExitCode::NOT_FOUND, $responseAfter->exit_code);
     }
 
     // ==================== ERROR HANDLING TESTS ====================
@@ -171,7 +171,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
     {
         $response = $this->service->runDirective('nonexistent:command');
 
-        $this->assertNotSame(ExitCode::SUCCESS, $response->exitCode);
+        $this->assertNotSame(ExitCode::SUCCESS, $response->exit_code);
         $this->assertNotEmpty($response->output);
     }
 }
