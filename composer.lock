@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "027bc2318539b544006c47fd4a00acd3",
+    "content-hash": "61edbf317797592128a06902a96586af",
     "packages": [
         {
             "name": "andydefer/domain-structures",
@@ -59,20 +59,19 @@
         },
         {
             "name": "andydefer/laravel-directive",
-            "version": "v3.19.1",
+            "version": "v3.20.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-directive.git",
-                "reference": "dda1cd3cebe0142de16e87370b72795574f9c989"
+                "reference": "0cebbb619177a473eee18e2dc735619cf2bbc51a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/dda1cd3cebe0142de16e87370b72795574f9c989",
-                "reference": "dda1cd3cebe0142de16e87370b72795574f9c989",
+                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/0cebbb619177a473eee18e2dc735619cf2bbc51a",
+                "reference": "0cebbb619177a473eee18e2dc735619cf2bbc51a",
                 "shasum": ""
             },
             "require": {
-                "andydefer/domain-structures": "^1.18.1",
                 "andydefer/php-vo": "^0.8.1",
                 "laravel/framework": "^12.0|^13.0|^14.0|^15.0",
                 "php": ">=8.1"
@@ -117,9 +116,9 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/v3.19.1"
+                "source": "https://github.com/andydefer/laravel-directive/tree/v3.20.0"
             },
-            "time": "2026-06-12T07:45:22+00:00"
+            "time": "2026-06-12T11:42:34+00:00"
         },
         {
             "name": "andydefer/php-vo",
