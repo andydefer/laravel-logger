@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "51b0f42c8208a3cb79972bf90815f432",
+    "content-hash": "d2e915b95a72efa7aae4e7cee161a3ba",
     "packages": [
         {
             "name": "andydefer/domain-structures",
@@ -122,16 +122,16 @@
         },
         {
             "name": "andydefer/laravel-jsonl",
-            "version": "0.3.0",
+            "version": "0.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-jsonl.git",
-                "reference": "17a866bddef806f9aa36c90ce51b10d397e3973a"
+                "reference": "65736dcdc6d8aef8d59084c15e004d7b8f953362"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-jsonl/zipball/17a866bddef806f9aa36c90ce51b10d397e3973a",
-                "reference": "17a866bddef806f9aa36c90ce51b10d397e3973a",
+                "url": "https://api.github.com/repos/andydefer/laravel-jsonl/zipball/65736dcdc6d8aef8d59084c15e004d7b8f953362",
+                "reference": "65736dcdc6d8aef8d59084c15e004d7b8f953362",
                 "shasum": ""
             },
             "require": {
@@ -171,9 +171,9 @@
             "description": "JSONL storage service for Laravel - write, read, query, and clean JSON Lines files with custom path strategies",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-jsonl/issues",
-                "source": "https://github.com/andydefer/laravel-jsonl/tree/0.3.0"
+                "source": "https://github.com/andydefer/laravel-jsonl/tree/0.4.0"
             },
-            "time": "2026-06-13T19:20:13+00:00"
+            "time": "2026-06-14T10:01:12+00:00"
         },
         {
             "name": "andydefer/php-services",
