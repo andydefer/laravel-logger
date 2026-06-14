@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Enums;
 
-use AndyDefer\DomainStructures\Traits\Enumable;
 
 enum LogLevel: string
 {
-    use Enumable;
 
     case DEBUG = 'debug';
     case INFO = 'info';

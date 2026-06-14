@@ -4,80 +4,76 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Integration;
 
-use AndyDefer\Logger\ValueObjects\LoggerConfig;
+use AndyDefer\DomainStructures\Services\HydrationService;
+use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
+use AndyDefer\LaravelJsonl\JsonlService;
+use AndyDefer\LaravelJsonl\Strategies\TemporalPathStrategy;
+use AndyDefer\Logger\Configs\LoggerConfig;
+use AndyDefer\Logger\Contracts\LoggerConfigInterface;
 use AndyDefer\Logger\Contracts\LoggerInterface;
-use AndyDefer\Logger\Directives\LoggerCleanDirective;
-use AndyDefer\Logger\Logger;
-use AndyDefer\Logger\Services\LogCleanerService;
-use AndyDefer\Logger\Services\LogPathService;
-use AndyDefer\Logger\Services\LogSerializerService;
-use AndyDefer\Logger\Tasks\QueryLogsTask;
-use AndyDefer\Logger\Tasks\StreamLogsTask;
-use AndyDefer\Logger\Tasks\WriteLogTask;
+use AndyDefer\Logger\LoggerService;
 use AndyDefer\Logger\Tests\IntegrationTestCase;
+use AndyDefer\PhpServices\Services\FileSystemService;
+use Illuminate\Support\Facades\Config;
 
 final class LoggerServiceProviderTest extends IntegrationTestCase
 {
     public function test_config_is_registered_as_singleton(): void
     {
-        $first = $this->app->make(LoggerConfig::class);
-        $second = $this->app->make(LoggerConfig::class);
+        $first = $this->app->make(LoggerConfigInterface::class);
+        $second = $this->app->make(LoggerConfigInterface::class);
 
         $this->assertSame($first, $second);
     }
 
     public function test_config_uses_values_from_environment(): void
     {
-        $config = $this->app->make(LoggerConfig::class);
+        Config::set('logger.path', '/tmp/logger_tests');
+        Config::set('logger.retention_days', 7);
+        Config::set('logger.buffer_size', null);
 
-        $this->assertSame('/tmp/logger_tests', $config->basePath);
-        $this->assertSame(7, $config->retentionDays);
+        $config = $this->app->make(LoggerConfigInterface::class);
+
+        $this->assertSame('/tmp/logger_tests', $config->basePath());
+        $this->assertSame(7, $config->retentionDays());
     }
 
-    public function test_log_path_service_is_registered_as_singleton(): void
+    public function test_jsonl_context_is_registered_as_singleton(): void
     {
-        $first = $this->app->make(LogPathService::class);
-        $second = $this->app->make(LogPathService::class);
+        $first = $this->app->make(JsonlContext::class);
+        $second = $this->app->make(JsonlContext::class);
 
         $this->assertSame($first, $second);
     }
 
-    public function test_log_serializer_service_is_registered_as_singleton(): void
+    public function test_file_system_service_is_registered_as_singleton(): void
     {
-        $first = $this->app->make(LogSerializerService::class);
-        $second = $this->app->make(LogSerializerService::class);
+        $first = $this->app->make(FileSystemService::class);
+        $second = $this->app->make(FileSystemService::class);
 
         $this->assertSame($first, $second);
     }
 
-    public function test_log_cleaner_service_is_registered_as_singleton(): void
+    public function test_temporal_path_strategy_is_registered_as_singleton(): void
     {
-        $first = $this->app->make(LogCleanerService::class);
-        $second = $this->app->make(LogCleanerService::class);
+        $first = $this->app->make(TemporalPathStrategy::class);
+        $second = $this->app->make(TemporalPathStrategy::class);
 
         $this->assertSame($first, $second);
     }
 
-    public function test_write_log_task_is_registered_as_singleton(): void
+    public function test_jsonl_service_is_registered_as_singleton(): void
     {
-        $first = $this->app->make(WriteLogTask::class);
-        $second = $this->app->make(WriteLogTask::class);
+        $first = $this->app->make(JsonlService::class);
+        $second = $this->app->make(JsonlService::class);
 
         $this->assertSame($first, $second);
     }
 
-    public function test_query_logs_task_is_registered_as_singleton(): void
+    public function test_hydration_service_is_registered_as_singleton(): void
     {
-        $first = $this->app->make(QueryLogsTask::class);
-        $second = $this->app->make(QueryLogsTask::class);
-
-        $this->assertSame($first, $second);
-    }
-
-    public function test_stream_logs_task_is_registered_as_singleton(): void
-    {
-        $first = $this->app->make(StreamLogsTask::class);
-        $second = $this->app->make(StreamLogsTask::class);
+        $first = $this->app->make(HydrationService::class);
+        $second = $this->app->make(HydrationService::class);
 
         $this->assertSame($first, $second);
     }
@@ -88,51 +84,36 @@ final class LoggerServiceProviderTest extends IntegrationTestCase
         $second = $this->app->make(LoggerInterface::class);
 
         $this->assertSame($first, $second);
-        $this->assertInstanceOf(Logger::class, $first);
+        $this->assertInstanceOf(LoggerService::class, $first);
     }
 
-    public function test_logger_clean_directive_is_registered_as_singleton(): void
+    public function test_logger_service_is_registered_as_singleton(): void
     {
-        $first = $this->app->make(LoggerCleanDirective::class);
-        $second = $this->app->make(LoggerCleanDirective::class);
+        $first = $this->app->make(LoggerService::class);
+        $second = $this->app->make(LoggerService::class);
 
         $this->assertSame($first, $second);
-        $this->assertInstanceOf(LoggerCleanDirective::class, $first);
-    }
-
-    public function test_logger_clean_directive_has_correct_configuration(): void
-    {
-        $directive = $this->app->make(LoggerCleanDirective::class);
-
-        // Vérifier la signature
-        $this->assertStringContainsString('logger-clean', $directive->getSignature());
-        $this->assertStringContainsString('--days', $directive->getSignature());
-        $this->assertStringContainsString('--dry-run', $directive->getSignature());
-        $this->assertStringContainsString('--verbose', $directive->getSignature());
-
-        // Vérifier la description
-        $this->assertStringContainsString('Remove old log files', $directive->getDescription());
-
-        // Vérifier les alias
-        $aliases = $directive->getAliases();
-        $this->assertTrue($aliases->contains('log-clean'));
-        $this->assertTrue($aliases->contains('clean-logs'));
-
-        // Vérifier qu'elle demande Laravel
-        $this->assertTrue($directive->shouldBootLaravel());
     }
 
     public function test_can_override_config_values(): void
     {
-        // Modifier la configuration
-        $this->app['config']->set('logger.path', '/custom/path');
-        $this->app['config']->set('logger.retention_days', 99);
+        Config::set('logger.path', '/custom/path');
+        Config::set('logger.retention_days', 99);
+        Config::set('logger.buffer_size', 50);
 
-        // Recréer le service
-        $this->app->forgetInstance(LoggerConfig::class);
-        $config = $this->app->make(LoggerConfig::class);
+        $this->app->forgetInstance(LoggerConfigInterface::class);
+        $config = $this->app->make(LoggerConfigInterface::class);
 
-        $this->assertSame('/custom/path', $config->basePath);
-        $this->assertSame(99, $config->retentionDays);
+        $this->assertSame('/custom/path', $config->basePath());
+        $this->assertSame(99, $config->retentionDays());
+        $this->assertSame(50, $config->bufferSize());
+        $this->assertTrue($config->isBufferEnabled());
+    }
+
+    public function test_logger_service_dependencies_are_correctly_injected(): void
+    {
+        $logger = $this->app->make(LoggerService::class);
+
+        $this->assertInstanceOf(LoggerService::class, $logger);
     }
 }

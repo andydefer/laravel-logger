@@ -9,9 +9,9 @@ use AndyDefer\Directive\Contexts\DirectiveContext;
 use AndyDefer\Directive\Enums\ExitCode;
 use AndyDefer\Directive\Services\DirectiveInteractionService;
 use AndyDefer\DomainStructures\Collections\Utility\StringTypedCollection;
-use AndyDefer\Logger\Services\LogCleanerService;
-use AndyDefer\Logger\Services\LogPathService;
-use AndyDefer\Logger\ValueObjects\IsoZuluTime;
+use AndyDefer\LaravelJsonl\JsonlService;
+use AndyDefer\Logger\Contracts\LoggerConfigInterface;
+use AndyDefer\PhpVo\ValueObjects\DateTimeVO;
 
 /**
  * CLI directive for cleaning old log files.
@@ -24,179 +24,137 @@ use AndyDefer\Logger\ValueObjects\IsoZuluTime;
  */
 final class LoggerCleanDirective extends AbstractDirective
 {
-    private const DEFAULT_RETENTION_DAYS = 30;
 
-    public function __construct(
-        DirectiveContext $context,
-        DirectiveInteractionService $interaction,
-        private readonly LogCleanerService $cleaner,
-        private readonly LogPathService $pathService,
-    ) {
-        parent::__construct($context, $interaction);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getSignature(): string
     {
         return 'logger-clean {--days=30 : Number of days to keep} {--dry-run : Simulate without deleting} {--verbose : Display detailed information}';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDescription(): string
     {
         return 'Remove old log files that exceed the retention period';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getAliases(): StringTypedCollection
     {
-        $aliases = new StringTypedCollection;
+        $aliases = new StringTypedCollection();
         $aliases->add('log-clean');
         $aliases->add('clean-logs');
 
         return $aliases;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function shouldBootLaravel(): bool
     {
         return true;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function execute(): ExitCode
     {
-        $days = $this->getRetentionDays();
+        $laravel = $this->getLaravel();
+        $jsonlService = $laravel->make(JsonlService::class);
+        $config = $laravel->make(LoggerConfigInterface::class);
+        $basePath = $config->basePath();
+
+        $days = (int) ($this->option('days') ?? 30);
         $dryRun = $this->hasOption('dry-run');
         $verbose = $this->hasOption('verbose');
-        $cutoffDate = $this->calculateCutoffDate($days);
 
-        $this->displayCurrentStatistics();
-
+        // Afficher les statistiques actuelles
         if ($verbose) {
-            $this->displayFilesToDelete($cutoffDate->getDate());
+            $this->displayCurrentStatistics($jsonlService, $basePath);
         }
 
+        // Mode dry-run : simuler sans supprimer
         if ($dryRun) {
-            return $this->handleDryRun($cutoffDate);
+            return $this->handleDryRun($jsonlService, $basePath, $days);
         }
 
-        return $this->handleDeletion($cutoffDate);
+        // Mode réel avec confirmation
+        return $this->handleDeletion($jsonlService, $basePath, $days);
     }
 
-    /**
-     * Get the retention days from options or use default.
-     */
-    private function getRetentionDays(): int
+    private function displayCurrentStatistics(JsonlService $jsonlService, string $basePath): void
     {
-        return (int) ($this->option('days') ?? self::DEFAULT_RETENTION_DAYS);
-    }
+        $filesToDelete = $jsonlService->dryRun($basePath, fn($file) => true);
 
-    /**
-     * Calculate the cutoff date based on retention days.
-     */
-    private function calculateCutoffDate(int $days): IsoZuluTime
-    {
-        $dateString = date('Y-m-d', strtotime("-$days days"));
-        return new IsoZuluTime($dateString . 'T23:59:59Z');
-    }
+        $totalFiles = count($filesToDelete);
+        $totalSize = 0;
+        $dates = [];
 
-    /**
-     * Display current log statistics to the user.
-     */
-    private function displayCurrentStatistics(): void
-    {
-        $stats = $this->cleaner->getStats();
+        foreach ($filesToDelete as $file) {
+            $totalSize += filesize($file);
+            $pathParts = explode(DIRECTORY_SEPARATOR, $file);
+            $date = $pathParts[count($pathParts) - 2] ?? '';
+            $dates[] = $date;
+        }
+
+        $totalSizeMb = round($totalSize / 1024 / 1024, 2);
+        $oldestDate = !empty($dates) ? min($dates) : 'N/A';
+        $newestDate = !empty($dates) ? max($dates) : 'N/A';
 
         $this->info('Current statistics:');
-        $this->line("  Files: {$stats->totalFiles}");
-        $this->line("  Size: {$stats->totalSizeMb} MB");
-        $this->line("  Lines: {$stats->totalLines}");
-        $this->line("  Range: {$stats->oldestDate} to {$stats->newestDate}");
-        $this->line("  Path: {$this->pathService->getConfig()->basePath}");
+        $this->line("  Files: {$totalFiles}");
+        $this->line("  Size: {$totalSizeMb} MB");
+        $this->line("  Range: {$oldestDate} to {$newestDate}");
+        $this->line("  Path: {$basePath}");
     }
 
-    /**
-     * Display the list of files that would be deleted.
-     */
-    private function displayFilesToDelete(string $date): void
+    private function handleDryRun(JsonlService $jsonlService, string $basePath, int $days): ExitCode
     {
-        $this->newLine();
-        $this->line('Files to delete:');
+        $cutoffDateTime = new DateTimeVO(date('Y-m-d', strtotime("-$days days")) . 'T00:00:00Z');
+        $filesToDelete = $jsonlService->dryRun($basePath, function ($file) use ($cutoffDateTime) {
+            $fileModifiedTime = filemtime($file);
+            return $fileModifiedTime < $cutoffDateTime->toTimestamp();
+        });
 
-        $files = $this->cleaner->getFilesByDate($date);
-
-        foreach ($files as $file) {
-            $this->line("  - {$file->date}/{$file->hour} ({$file->size} bytes)");
-        }
-
-        if ($files->isEmpty()) {
-            $this->line('  (none)');
-        }
-    }
-
-    /**
-     * Handle dry-run mode (preview only, no actual deletion).
-     */
-    private function handleDryRun(IsoZuluTime $cutoffDate): ExitCode
-    {
         $this->warn('Dry run mode - no files will be deleted');
-        $this->info("Would delete files older than {$cutoffDate->getDate()}");
+        $this->info("Would delete files older than {$cutoffDateTime->toDateString()}");
 
-        $count = $this->cleaner->countFilesToDelete($cutoffDate);
+        if ($this->hasOption('verbose')) {
+            $this->newLine();
+            $this->line('Files to delete:');
 
+            foreach ($filesToDelete as $file) {
+                $sizeKb = round(filesize($file) / 1024, 2);
+                $fileName = basename($file);
+                $this->line("  - {$fileName} ({$sizeKb} KB)");
+            }
+        }
+
+        $count = count($filesToDelete);
         if ($count > 0) {
             $this->info("Would delete {$count} file(s)");
+        } else {
+            $this->info('No files to delete.');
         }
 
         return ExitCode::SUCCESS;
     }
 
-    /**
-     * Handle actual deletion after user confirmation.
-     */
-    private function handleDeletion(IsoZuluTime $cutoffDate): ExitCode
+    private function handleDeletion(JsonlService $jsonlService, string $basePath, int $days): ExitCode
     {
-        $count = $this->cleaner->countFilesToDelete($cutoffDate);
+        $cutoffDateTime = new DateTimeVO(date('Y-m-d', strtotime("-$days days")) . 'T00:00:00Z');
+        $filesToDelete = $jsonlService->dryRun($basePath, function ($file) use ($cutoffDateTime) {
+            $fileModifiedTime = filemtime($file);
+            return $fileModifiedTime < $cutoffDateTime->toTimestamp();
+        });
+
+        $count = count($filesToDelete);
 
         if ($count === 0) {
             $this->info('No files to delete.');
             return ExitCode::SUCCESS;
         }
 
-        if (!$this->confirm("Delete {$count} log(s) older than {$cutoffDate->getDate()}?")) {
+        if (!$this->confirm("Delete {$count} log(s) older than {$cutoffDateTime->toDateString()}?")) {
             $this->info('Aborted.');
             return ExitCode::SUCCESS;
         }
 
-        $deletedCount = $this->cleaner->cleanWithCutoff($cutoffDate);
+        $deletedCount = $jsonlService->cleanOlderThan($days, $basePath);
         $this->info("✓ Deleted {$deletedCount} file(s)");
 
-        $this->displayNewStatistics();
-
         return ExitCode::SUCCESS;
-    }
-
-    /**
-     * Display updated statistics after deletion.
-     */
-    private function displayNewStatistics(): void
-    {
-        $newStats = $this->cleaner->getStats();
-
-        $this->newLine();
-        $this->info('New statistics:');
-        $this->line("  Files: {$newStats->totalFiles}");
-        $this->line("  Size: {$newStats->totalSizeMb} MB");
     }
 }

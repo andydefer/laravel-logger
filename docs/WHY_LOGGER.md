@@ -16,7 +16,7 @@ Ce manifeste n'est pas une attaque contre Laravel. C'est une analyse honnête de
 
 ### 1. Le format non structuré (texte libre)
 
-**Le problème :** Les logs Laravel sont du texte. Du texte libre, non structuré, impossible à parser fiablement.
+**Le problème :** Les logs Laravel sont du texte. Du texte libre, non structuréré, impossible à parser fiablement.
 
 ```php
 // Laravel - Log texte
@@ -262,17 +262,17 @@ $logger->flush();  // Une seule écriture disque
 
 **La solution Laravel Logger :**
 ```bash
-# Laravel Logger - Directive intégrée
-./vendor/bin/directive logger-clean --days=30
+# Laravel Logger - Nettoyage intégré
+php artisan logger:clean --days=30
 
 # Avec simulation
-./vendor/bin/directive logger-clean --dry-run --verbose
+php artisan logger:clean --days=30 --dry-run --verbose
 
 # En cron (nettoyage quotidien)
-0 2 * * * cd /project && ./vendor/bin/directive logger-clean --days=30
+0 2 * * * cd /project && php artisan logger:clean --days=30
 ```
 
-**Automatique :** Le `LoggerServiceProvider` nettoie automatiquement à la fin de chaque requête (optionnel).
+**Automatique :** Nettoyage configurable via `logger.retention_days` dans la configuration.
 
 ---
 
@@ -286,7 +286,7 @@ $logger->flush();  // Une seule écriture disque
 | Message et contexte mélangés | `type` (QUOI) + `payload` (DONNÉES) |
 | Tests fragiles (strings) | Tests sur la structure (objets typés) |
 | Écriture synchrone (I/O lente) | Bufferisation avec auto-flush |
-| Pas de maintenance automatique | Directive intégrée + nettoyage auto |
+| Pas de maintenance automatique | Commande Artisan intégrée + nettoyage auto |
 
 ---
 
@@ -296,7 +296,7 @@ Aucune solution n'est parfaite. Laravel Logger a aussi ses compromis :
 
 ### 1. Une dépendance supplémentaire
 - Laravel a un logger natif
-- Laravel Logger ajoute `andydefer/domain-structures` comme dépendance
+- Laravel Logger ajoute des dépendances (`php-vo`, `domain-structures`, `php-services`, `laravel-jsonl`)
 
 ### 2. Une courbe d'apprentissage
 - Laravel `Log::info('message')` est trivial
@@ -406,4 +406,3 @@ $logger->expects($this->once())
 ```
 
 La différence ? La **structure**. Et c'est toute la philosophie.
----

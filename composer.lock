@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "13ade19cff033e0ebaf00435320d2dbe",
+    "content-hash": "51b0f42c8208a3cb79972bf90815f432",
     "packages": [
         {
             "name": "andydefer/domain-structures",
@@ -59,16 +59,16 @@
         },
         {
             "name": "andydefer/laravel-directive",
-            "version": "v3.23.0",
+            "version": "v3.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-directive.git",
-                "reference": "6d76654953ca8efe2e26e694d5e60924507db05d"
+                "reference": "80fc6e5a2746fe858f0fec9cf90a16e3e0a9d6b7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/6d76654953ca8efe2e26e694d5e60924507db05d",
-                "reference": "6d76654953ca8efe2e26e694d5e60924507db05d",
+                "url": "https://api.github.com/repos/andydefer/laravel-directive/zipball/80fc6e5a2746fe858f0fec9cf90a16e3e0a9d6b7",
+                "reference": "80fc6e5a2746fe858f0fec9cf90a16e3e0a9d6b7",
                 "shasum": ""
             },
             "require": {
@@ -116,9 +116,64 @@
             "description": "A flexible CLI command system for Laravel that breaks free from Artisan's constraints. Directives introduces a clean separation between what your command does (business logic) and how it's presented (output/UI).",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-directive/issues",
-                "source": "https://github.com/andydefer/laravel-directive/tree/v3.23.0"
+                "source": "https://github.com/andydefer/laravel-directive/tree/v3.25.0"
             },
-            "time": "2026-06-13T08:31:45+00:00"
+            "time": "2026-06-13T18:20:37+00:00"
+        },
+        {
+            "name": "andydefer/laravel-jsonl",
+            "version": "0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/andydefer/laravel-jsonl.git",
+                "reference": "17a866bddef806f9aa36c90ce51b10d397e3973a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/andydefer/laravel-jsonl/zipball/17a866bddef806f9aa36c90ce51b10d397e3973a",
+                "reference": "17a866bddef806f9aa36c90ce51b10d397e3973a",
+                "shasum": ""
+            },
+            "require": {
+                "andydefer/php-services": "^0.5.0",
+                "laravel/framework": "^12.0|^13.0|^14.0|^15.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.26",
+                "mockery/mockery": "^1.6",
+                "orchestra/testbench": "^10.8",
+                "phpunit/phpunit": "^12.5"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "AndyDefer\\LaravelJsonl\\LaravelJsonlServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "AndyDefer\\LaravelJsonl\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andy Kani",
+                    "email": "andykanidimbu@gmail.com"
+                }
+            ],
+            "description": "JSONL storage service for Laravel - write, read, query, and clean JSON Lines files with custom path strategies",
+            "support": {
+                "issues": "https://github.com/andydefer/laravel-jsonl/issues",
+                "source": "https://github.com/andydefer/laravel-jsonl/tree/0.3.0"
+            },
+            "time": "2026-06-13T19:20:13+00:00"
         },
         {
             "name": "andydefer/php-services",
