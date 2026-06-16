@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7e8f3ef8f42adde5b2cb1f3665de5a55",
+    "content-hash": "aefbc6e7e1a129333004949d0eb3e2c3",
     "packages": [
         {
             "name": "andydefer/domain-structures",
@@ -122,20 +122,20 @@
         },
         {
             "name": "andydefer/laravel-jsonl",
-            "version": "v0.5.0",
+            "version": "v0.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-jsonl.git",
-                "reference": "6d32e0418cade1d21b6cb67ea3d1f7c1e212f333"
+                "reference": "fd646a5ea3966a22037c1387294945cb0bbc1e4d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-jsonl/zipball/6d32e0418cade1d21b6cb67ea3d1f7c1e212f333",
-                "reference": "6d32e0418cade1d21b6cb67ea3d1f7c1e212f333",
+                "url": "https://api.github.com/repos/andydefer/laravel-jsonl/zipball/fd646a5ea3966a22037c1387294945cb0bbc1e4d",
+                "reference": "fd646a5ea3966a22037c1387294945cb0bbc1e4d",
                 "shasum": ""
             },
             "require": {
-                "andydefer/php-services": "^1.0.0",
+                "andydefer/php-services": "^1.0",
                 "laravel/framework": "^12.0|^13.0|^14.0|^15.0",
                 "php": "^8.2"
             },
@@ -171,9 +171,9 @@
             "description": "JSONL storage service for Laravel - write, read, query, and clean JSON Lines files with custom path strategies",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-jsonl/issues",
-                "source": "https://github.com/andydefer/laravel-jsonl/tree/v0.5.0"
+                "source": "https://github.com/andydefer/laravel-jsonl/tree/v0.6.0"
             },
-            "time": "2026-06-16T00:24:25+00:00"
+            "time": "2026-06-16T00:53:53+00:00"
         },
         {
             "name": "andydefer/php-services",
