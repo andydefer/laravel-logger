@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace AndyDefer\Logger;
 
 use AndyDefer\DomainStructures\Services\HydrationService;
+use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
 use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Strategies\TemporalPathStrategy;
-use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
 use AndyDefer\Logger\Configs\LoggerConfig;
 use AndyDefer\Logger\Contracts\LoggerConfigInterface;
-use AndyDefer\PhpServices\Services\FileSystemService;
 use AndyDefer\Logger\Contracts\LoggerInterface;
+use AndyDefer\PhpServices\Services\FileSystemService;
 use Illuminate\Contracts\Config\Repository as ConfigRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -44,6 +44,7 @@ final class LoggerServiceProvider extends ServiceProvider
 
         $this->app->singleton(TemporalPathStrategy::class, function ($app) {
             $config = $app->make(LoggerConfigInterface::class);
+
             return new TemporalPathStrategy($config->basePath());
         });
 
@@ -76,7 +77,7 @@ final class LoggerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/logger.php' => config_path('logger.php'),
+            __DIR__.'/../config/logger.php' => config_path('logger.php'),
         ], 'logger-config');
     }
 }

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace AndyDefer\Logger\Tests\Unit\Directives;
 
 use AndyDefer\Directive\Contexts\DirectiveContext;
+use AndyDefer\Directive\Dispatchers\InputDispatcher;
+use AndyDefer\Directive\Dispatchers\RenderDispatcher;
 use AndyDefer\Directive\Enums\ExitCode;
 use AndyDefer\Directive\Records\DirectiveBlueprintRecord;
+use AndyDefer\Directive\Records\DirectiveResponseRecord;
 use AndyDefer\Directive\Services\DirectiveInteractionService;
 use AndyDefer\Directive\Services\DirectiveTestingService;
 use AndyDefer\DomainStructures\Collections\Utility\StringTypedCollection;
@@ -19,6 +22,7 @@ use AndyDefer\Logger\Directives\LoggerCleanDirective;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\LoggerService;
 use AndyDefer\Logger\Records\LogDataRecord;
+use AndyDefer\Logger\Records\LogRecord;
 use AndyDefer\Logger\Tests\IntegrationTestCase;
 use AndyDefer\PhpServices\Services\FileSystemService;
 use AndyDefer\PhpVo\ValueObjects\DateTimeVO;
@@ -26,16 +30,20 @@ use AndyDefer\PhpVo\ValueObjects\DateTimeVO;
 final class LoggerCleanDirectiveTest extends IntegrationTestCase
 {
     private DirectiveTestingService $directiveService;
+
     private LoggerService $loggerService;
+
     private FileSystemService $fileSystem;
+
     private string $tempDir;
+
     private HydrationService $hydrationService;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->tempDir = sys_get_temp_dir() . '/logger_clean_test_' . uniqid();
+        $this->tempDir = sys_get_temp_dir().'/logger_clean_test_'.uniqid();
 
         // Configurer le chemin des logs dans Laravel
         $this->app['config']->set('logger.path', $this->tempDir);
@@ -43,9 +51,9 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         $this->app['config']->set('logger.buffer_size', null);
 
         // Créer le LoggerService
-        $this->fileSystem = new FileSystemService();
-        $context = new JsonlContext();
-        $this->hydrationService = new HydrationService();
+        $this->fileSystem = new FileSystemService;
+        $context = new JsonlContext;
+        $this->hydrationService = new HydrationService;
         $strategy = new TemporalPathStrategy($this->tempDir);
         $jsonlService = new JsonlService($strategy, $this->fileSystem, $context);
 
@@ -66,13 +74,13 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
 
     private function removeDirectory(string $dir): void
     {
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return;
         }
 
         $files = array_diff(scandir($dir), ['.', '..']);
         foreach ($files as $file) {
-            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            $path = $dir.DIRECTORY_SEPARATOR.$file;
             if (is_dir($path)) {
                 $this->removeDirectory($path);
             } else {
@@ -84,7 +92,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
 
     private function createLogRecord(string $date, string $hour, string $type = 'test', array $payload = []): void
     {
-        $timestamp = $date . 'T' . $hour . ':00:00Z';
+        $timestamp = $date.'T'.$hour.':00:00Z';
         $dateTime = new DateTimeVO($timestamp);
 
         $logData = new LogDataRecord(
@@ -92,7 +100,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
             payload: new StrictDataObject($payload ?: ['message' => 'test log', 'value' => 1])
         );
 
-        $record = $this->hydrationService->hydrate(\AndyDefer\Logger\Records\LogRecord::class, [
+        $record = $this->hydrationService->hydrate(LogRecord::class, [
             'time' => $dateTime,
             'level' => LogLevel::INFO,
             'data' => $logData,
@@ -106,7 +114,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         $filePath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             $date,
-            $hour . '.jsonl',
+            $hour.'.jsonl',
         ]);
 
         if (file_exists($filePath)) {
@@ -126,7 +134,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
             description: 'Remove old log files'
         );
 
-        $aliases = new StringTypedCollection();
+        $aliases = new StringTypedCollection;
         $aliases->add('log-clean');
         $aliases->add('clean-logs');
 
@@ -137,8 +145,8 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         );
 
         $interaction = new DirectiveInteractionService(
-            new \AndyDefer\Directive\Dispatchers\RenderDispatcher(),
-            new \AndyDefer\Directive\Dispatchers\InputDispatcher(),
+            new RenderDispatcher,
+            new InputDispatcher,
         );
 
         return new LoggerCleanDirective($context, $interaction);
@@ -148,7 +156,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
      * Pour les tests qui ne doivent PAS demander de confirmation (dry-run)
      * On utilise run() de DirectiveTestingService qui gère les arguments
      */
-    private function runDirectiveWithArgs(array $arguments = []): \AndyDefer\Directive\Records\DirectiveResponseRecord
+    private function runDirectiveWithArgs(array $arguments = []): DirectiveResponseRecord
     {
         return $this->directiveService->run(LoggerCleanDirective::class, $arguments);
     }
@@ -208,7 +216,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         $this->createLogRecord('2024-01-01', '10', 'old_log', ['value' => 1]);
         $this->modifyFileAge('2024-01-01', '10', 60);
 
-        $oldFile = $this->tempDir . '/2024-01-01/10.jsonl';
+        $oldFile = $this->tempDir.'/2024-01-01/10.jsonl';
         $this->assertFileExists($oldFile);
 
         $response = $this->runDirectiveWithArgs(['--dry-run', '--verbose']);
@@ -252,7 +260,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         $this->createLogRecord('2024-01-01', '10', 'old_log', ['value' => 1]);
         $this->modifyFileAge('2024-01-01', '10', 31);
 
-        $oldFile = $this->tempDir . '/2024-01-01/10.jsonl';
+        $oldFile = $this->tempDir.'/2024-01-01/10.jsonl';
         $this->assertFileExists($oldFile);
 
         // Par défaut, retention = 30 jours → doit supprimer
@@ -268,7 +276,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
         $this->createLogRecord('2024-01-01', '10', 'old_log', ['value' => 1]);
         $this->modifyFileAge('2024-01-01', '10', 15);
 
-        $oldFile = $this->tempDir . '/2024-01-01/10.jsonl';
+        $oldFile = $this->tempDir.'/2024-01-01/10.jsonl';
         $this->assertFileExists($oldFile);
 
         // --days=10 → fichier de 15 jours doit être supprimé
@@ -281,7 +289,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
     public function test_empty_directory_handling(): void
     {
         // Créer un dossier vide (sans fichier)
-        $emptyDir = $this->tempDir . '/2024-01-01';
+        $emptyDir = $this->tempDir.'/2024-01-01';
         mkdir($emptyDir, 0755, true);
 
         $this->assertDirectoryExists($emptyDir);
@@ -304,7 +312,7 @@ final class LoggerCleanDirectiveTest extends IntegrationTestCase
     public function test_handles_missing_log_directory_gracefully(): void
     {
         // Configurer un chemin qui n'existe pas
-        $this->app['config']->set('logger.path', '/nonexistent/path/' . uniqid());
+        $this->app['config']->set('logger.path', '/nonexistent/path/'.uniqid());
 
         $service = new DirectiveTestingService($this->app);
         $response = $service->run(LoggerCleanDirective::class, ['--dry-run']);

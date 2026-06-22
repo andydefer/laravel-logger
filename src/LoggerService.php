@@ -92,7 +92,7 @@ final class LoggerService implements LoggerInterface
         $results = new LogRecordCollection(LogRecord::class);
 
         foreach ($files as $file) {
-            if (!$this->jsonlService->fileExists($file)) {
+            if (! $this->jsonlService->fileExists($file)) {
                 continue;
             }
 
@@ -122,10 +122,10 @@ final class LoggerService implements LoggerInterface
             $filePath = implode(DIRECTORY_SEPARATOR, [
                 rtrim($basePath, DIRECTORY_SEPARATOR),
                 $targetDate,
-                $hourStr . '.jsonl',
+                $hourStr.'.jsonl',
             ]);
 
-            if (!$this->jsonlService->fileExists($filePath)) {
+            if (! $this->jsonlService->fileExists($filePath)) {
                 continue;
             }
 
@@ -141,12 +141,13 @@ final class LoggerService implements LoggerInterface
     /**
      * Enable buffering mode for better write performance.
      *
-     * @param int $size Number of records to buffer before auto-flush
+     * @param  int  $size  Number of records to buffer before auto-flush
      * @return self Returns the instance for method chaining
      */
     public function enableBuffer(int $size = 100): self
     {
         $this->jsonlService->enableBuffer($size);
+
         return $this;
     }
 
@@ -158,6 +159,7 @@ final class LoggerService implements LoggerInterface
     public function disableBuffer(): self
     {
         $this->jsonlService->disableBuffer();
+
         return $this;
     }
 
@@ -225,7 +227,7 @@ final class LoggerService implements LoggerInterface
     {
         /** @var LogDataRecord $data */
         return new LogJsonlRecord(
-            time: new DateTimeVO(),
+            time: new DateTimeVO,
             level: $level->value,
             type: $data->type,
             payload: $data->payload,

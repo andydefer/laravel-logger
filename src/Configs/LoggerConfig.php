@@ -32,7 +32,7 @@ final class LoggerConfig implements LoggerConfigInterface
             return storage_path('logs/structured');
         }
 
-        return getcwd() . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'structured';
+        return getcwd().DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'structured';
     }
 
     public function bufferSize(): ?int

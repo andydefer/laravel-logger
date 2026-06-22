@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Collections;
 
-use AndyDefer\Directive\Collections\AbstractItemCollection;
 use AndyDefer\DomainStructures\Abstracts\AbstractTypedCollection;
 use AndyDefer\Logger\ValueObjects\LogDate;
 
@@ -28,6 +27,6 @@ final class LogDateCollection extends AbstractTypedCollection
      */
     public function toStringArray(): array
     {
-        return array_map(fn(LogDate $date) => $date->getValue(), $this->toArray());
+        return array_map(fn (LogDate $date) => $date->getValue(), $this->toArray());
     }
 }

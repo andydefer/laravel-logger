@@ -6,33 +6,35 @@ namespace AndyDefer\Logger\Tests\Integration;
 
 use AndyDefer\DomainStructures\Services\HydrationService;
 use AndyDefer\DomainStructures\Utils\StrictDataObject;
-use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
+use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Strategies\TemporalPathStrategy;
 use AndyDefer\Logger\Enums\LogLevel;
 use AndyDefer\Logger\LoggerService;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogQueryRecord;
 use AndyDefer\Logger\Records\LogRecord;
-use AndyDefer\Logger\ValueObjects\IsoZuluTime;
-use AndyDefer\PhpServices\Services\FileSystemService;
-use AndyDefer\PhpServices\Enums\PermissionMode;
-use AndyDefer\PhpVo\ValueObjects\DateTimeVO;
 use AndyDefer\Logger\Tests\IntegrationTestCase;
+use AndyDefer\Logger\ValueObjects\IsoZuluTime;
+use AndyDefer\PhpServices\Enums\PermissionMode;
+use AndyDefer\PhpServices\Services\FileSystemService;
 
 final class LoggerServiceIntegrationTest extends IntegrationTestCase
 {
     private LoggerService $logger;
+
     private FileSystemService $fileSystem;
+
     private string $tempDir;
+
     private TemporalPathStrategy $strategy;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->fileSystem = new FileSystemService();
-        $this->tempDir = sys_get_temp_dir() . '/logger_test_' . uniqid();
+        $this->fileSystem = new FileSystemService;
+        $this->tempDir = sys_get_temp_dir().'/logger_test_'.uniqid();
         $this->fileSystem->makeDirectory($this->tempDir, PermissionMode::DIRECTORY, true);
 
         $this->strategy = new TemporalPathStrategy($this->tempDir);
@@ -41,12 +43,12 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $jsonlService = new JsonlService(
             pathStrategy: $this->strategy,
             fileSystem: $this->fileSystem,
-            context: new JsonlContext(),  // ← AJOUTÉ
+            context: new JsonlContext,  // ← AJOUTÉ
             defaultBufferSize: null,
             directoryPermission: PermissionMode::DIRECTORY,
         );
 
-        $hydrationService = new HydrationService();
+        $hydrationService = new HydrationService;
 
         $this->logger = new LoggerService($jsonlService, $hydrationService);
     }
@@ -59,13 +61,13 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
     private function removeDirectory(string $dir): void
     {
-        if (!is_dir($dir)) {
+        if (! is_dir($dir)) {
             return;
         }
 
         $files = array_diff(scandir($dir), ['.', '..']);
         foreach ($files as $file) {
-            $path = $dir . DIRECTORY_SEPARATOR . $file;
+            $path = $dir.DIRECTORY_SEPARATOR.$file;
             if (is_dir($path)) {
                 $this->removeDirectory($path);
             } else {
@@ -99,7 +101,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
@@ -124,7 +126,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
@@ -148,7 +150,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
@@ -172,7 +174,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
@@ -205,7 +207,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
@@ -231,7 +233,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $content = $this->getFileContent($expectedPath);
@@ -256,8 +258,8 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($paymentData);
 
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d') . 'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d') . 'T23:59:59Z'),
+            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
+            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
             type: 'user_login',
             level: null,
         );
@@ -280,8 +282,8 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->error($errorData);
 
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d') . 'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d') . 'T23:59:59Z'),
+            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
+            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
             type: null,
             level: LogLevel::ERROR,
         );
@@ -306,8 +308,8 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($paymentInfo);
 
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d') . 'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d') . 'T23:59:59Z'),
+            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
+            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
             type: 'user_login',
             level: LogLevel::ERROR,
         );
@@ -328,8 +330,8 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($loginData);
 
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d') . 'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d') . 'T23:59:59Z'),
+            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
+            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
             type: 'nonexistent_type',
             level: null,
         );
@@ -411,7 +413,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         // Écrire 2 logs (buffer pas encore flush)
@@ -442,7 +444,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $this->logger->info($data1);
@@ -469,7 +471,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $this->logger->info($data);
@@ -514,7 +516,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $content = $this->getFileContent($expectedPath);
@@ -536,7 +538,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             date('Y-m-d'),
-            date('H') . '.jsonl',
+            date('H').'.jsonl',
         ]);
 
         $content = $this->getFileContent($expectedPath);

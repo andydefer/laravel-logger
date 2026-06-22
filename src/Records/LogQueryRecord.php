@@ -18,10 +18,10 @@ use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 final class LogQueryRecord extends AbstractRecord
 {
     /**
-     * @param IsoZuluTime $from Start date (inclusive)
-     * @param IsoZuluTime $to End date (inclusive)
-     * @param string|null $type Event type (e.g., 'user_login')
-     * @param LogLevel|null $level Log severity level
+     * @param  IsoZuluTime  $from  Start date (inclusive)
+     * @param  IsoZuluTime  $to  End date (inclusive)
+     * @param  string|null  $type  Event type (e.g., 'user_login')
+     * @param  LogLevel|null  $level  Log severity level
      */
     public function __construct(
         public readonly IsoZuluTime $from,

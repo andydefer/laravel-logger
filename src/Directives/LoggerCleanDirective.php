@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace AndyDefer\Logger\Directives;
 
 use AndyDefer\Directive\AbstractDirective;
-use AndyDefer\Directive\Contexts\DirectiveContext;
 use AndyDefer\Directive\Enums\ExitCode;
-use AndyDefer\Directive\Services\DirectiveInteractionService;
 use AndyDefer\DomainStructures\Collections\Utility\StringTypedCollection;
 use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\Logger\Contracts\LoggerConfigInterface;
@@ -24,7 +22,6 @@ use AndyDefer\PhpVo\ValueObjects\DateTimeVO;
  */
 final class LoggerCleanDirective extends AbstractDirective
 {
-
     public function getSignature(): string
     {
         return 'logger-clean {--days=30 : Number of days to keep} {--dry-run : Simulate without deleting} {--verbose : Display detailed information}';
@@ -37,7 +34,7 @@ final class LoggerCleanDirective extends AbstractDirective
 
     public function getAliases(): StringTypedCollection
     {
-        $aliases = new StringTypedCollection();
+        $aliases = new StringTypedCollection;
         $aliases->add('log-clean');
         $aliases->add('clean-logs');
 
@@ -76,7 +73,7 @@ final class LoggerCleanDirective extends AbstractDirective
 
     private function displayCurrentStatistics(JsonlService $jsonlService, string $basePath): void
     {
-        $filesToDelete = $jsonlService->dryRun($basePath, fn($file) => true);
+        $filesToDelete = $jsonlService->dryRun($basePath, fn ($file) => true);
 
         $totalFiles = count($filesToDelete);
         $totalSize = 0;
@@ -90,8 +87,8 @@ final class LoggerCleanDirective extends AbstractDirective
         }
 
         $totalSizeMb = round($totalSize / 1024 / 1024, 2);
-        $oldestDate = !empty($dates) ? min($dates) : 'N/A';
-        $newestDate = !empty($dates) ? max($dates) : 'N/A';
+        $oldestDate = ! empty($dates) ? min($dates) : 'N/A';
+        $newestDate = ! empty($dates) ? max($dates) : 'N/A';
 
         $this->info('Current statistics:');
         $this->line("  Files: {$totalFiles}");
@@ -102,9 +99,10 @@ final class LoggerCleanDirective extends AbstractDirective
 
     private function handleDryRun(JsonlService $jsonlService, string $basePath, int $days): ExitCode
     {
-        $cutoffDateTime = new DateTimeVO(date('Y-m-d', strtotime("-$days days")) . 'T00:00:00Z');
+        $cutoffDateTime = new DateTimeVO(date('Y-m-d', strtotime("-$days days")).'T00:00:00Z');
         $filesToDelete = $jsonlService->dryRun($basePath, function ($file) use ($cutoffDateTime) {
             $fileModifiedTime = filemtime($file);
+
             return $fileModifiedTime < $cutoffDateTime->toTimestamp();
         });
 
@@ -134,9 +132,10 @@ final class LoggerCleanDirective extends AbstractDirective
 
     private function handleDeletion(JsonlService $jsonlService, string $basePath, int $days): ExitCode
     {
-        $cutoffDateTime = new DateTimeVO(date('Y-m-d', strtotime("-$days days")) . 'T00:00:00Z');
+        $cutoffDateTime = new DateTimeVO(date('Y-m-d', strtotime("-$days days")).'T00:00:00Z');
         $filesToDelete = $jsonlService->dryRun($basePath, function ($file) use ($cutoffDateTime) {
             $fileModifiedTime = filemtime($file);
+
             return $fileModifiedTime < $cutoffDateTime->toTimestamp();
         });
 
@@ -144,11 +143,13 @@ final class LoggerCleanDirective extends AbstractDirective
 
         if ($count === 0) {
             $this->info('No files to delete.');
+
             return ExitCode::SUCCESS;
         }
 
-        if (!$this->confirm("Delete {$count} log(s) older than {$cutoffDateTime->toDateString()}?")) {
+        if (! $this->confirm("Delete {$count} log(s) older than {$cutoffDateTime->toDateString()}?")) {
             $this->info('Aborted.');
+
             return ExitCode::SUCCESS;
         }
 

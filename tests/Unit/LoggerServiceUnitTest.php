@@ -14,9 +14,8 @@ use AndyDefer\Logger\LoggerService;
 use AndyDefer\Logger\Records\LogDataRecord;
 use AndyDefer\Logger\Records\LogQueryRecord;
 use AndyDefer\Logger\Records\LogRecord;
-use AndyDefer\Logger\ValueObjects\IsoZuluTime;
-use AndyDefer\PhpVo\ValueObjects\DateTimeVO;
 use AndyDefer\Logger\Tests\UnitTestCase;
+use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -24,7 +23,9 @@ use PHPUnit\Framework\MockObject\MockObject;
 final class LoggerServiceUnitTest extends UnitTestCase
 {
     private JsonlService&MockObject $jsonlService;
+
     private HydrationService $hydrationService;
+
     private LoggerService $logger;
 
     protected function setUp(): void
@@ -32,7 +33,7 @@ final class LoggerServiceUnitTest extends UnitTestCase
         parent::setUp();
 
         $this->jsonlService = $this->createMock(JsonlService::class);
-        $this->hydrationService = new HydrationService();
+        $this->hydrationService = new HydrationService;
         $this->logger = new LoggerService($this->jsonlService, $this->hydrationService);
     }
 
@@ -236,7 +237,7 @@ final class LoggerServiceUnitTest extends UnitTestCase
             'time' => '2026-01-15T10:00:00Z',
             'level' => 'info',
             'type' => 'user_login',
-            'payload' => ['user_id' => 1]
+            'payload' => ['user_id' => 1],
         ];
 
         $this->jsonlService->expects($this->once())
@@ -278,7 +279,7 @@ final class LoggerServiceUnitTest extends UnitTestCase
             'time' => '2026-01-15T10:00:00Z',
             'level' => 'error',
             'type' => 'payment_failed',
-            'payload' => ['payment_id' => 123]
+            'payload' => ['payment_id' => 123],
         ];
 
         $this->jsonlService->expects($this->once())

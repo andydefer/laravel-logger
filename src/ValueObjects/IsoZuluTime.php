@@ -7,7 +7,6 @@ namespace AndyDefer\Logger\ValueObjects;
 use AndyDefer\DomainStructures\Abstracts\AbstractValueObject;
 use AndyDefer\Logger\Records\IsoZuluTimeRecord;
 use DateTimeImmutable;
-use DateTimeInterface;
 use InvalidArgumentException;
 
 /**
@@ -21,6 +20,7 @@ use InvalidArgumentException;
 final class IsoZuluTime extends AbstractValueObject
 {
     private const FORMAT = 'Y-m-d\TH:i:s\Z';
+
     private const LEGACY_FORMAT = 'Y-m-d H:i:s';
 
     private DateTimeImmutable $dateTime;
@@ -28,7 +28,8 @@ final class IsoZuluTime extends AbstractValueObject
     /**
      * Create a new IsoZuluTime instance.
      *
-     * @param string $value ISO 8601 Zulu timestamp (e.g., "2024-01-01T12:00:00Z")
+     * @param  string  $value  ISO 8601 Zulu timestamp (e.g., "2024-01-01T12:00:00Z")
+     *
      * @throws InvalidArgumentException If the timestamp format is invalid
      */
     public function __construct(string $value)
@@ -88,6 +89,7 @@ final class IsoZuluTime extends AbstractValueObject
     public function addSeconds(int $seconds): self
     {
         $newDateTime = $this->dateTime->modify("+{$seconds} seconds");
+
         return new self($newDateTime->format(self::FORMAT));
     }
 
@@ -99,6 +101,7 @@ final class IsoZuluTime extends AbstractValueObject
     public function addMinutes(int $minutes): self
     {
         $newDateTime = $this->dateTime->modify("+{$minutes} minutes");
+
         return new self($newDateTime->format(self::FORMAT));
     }
 
@@ -110,6 +113,7 @@ final class IsoZuluTime extends AbstractValueObject
     public function addHours(int $hours): self
     {
         $newDateTime = $this->dateTime->modify("+{$hours} hours");
+
         return new self($newDateTime->format(self::FORMAT));
     }
 
@@ -132,14 +136,15 @@ final class IsoZuluTime extends AbstractValueObject
     /**
      * Parse and validate a timestamp string.
      *
-     * @param string $value Timestamp to parse
+     * @param  string  $value  Timestamp to parse
      * @return DateTimeImmutable Parsed datetime
+     *
      * @throws InvalidArgumentException If the format is invalid
      */
     private function parseTimestamp(string $value): DateTimeImmutable
     {
         // Try ISO 8601 Zulu format first
-        $dateTime = DateTimeImmutable::createFromFormat(self::FORMAT . '+', $value . '+');
+        $dateTime = DateTimeImmutable::createFromFormat(self::FORMAT.'+', $value.'+');
 
         if ($dateTime !== false) {
             return $dateTime->setTimezone(new \DateTimeZone('UTC'));

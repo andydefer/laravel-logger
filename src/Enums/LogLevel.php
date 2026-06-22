@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Enums;
 
-
 enum LogLevel: string
 {
-
     case DEBUG = 'debug';
     case INFO = 'info';
     case WARNING = 'warning';

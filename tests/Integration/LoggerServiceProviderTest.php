@@ -8,7 +8,6 @@ use AndyDefer\DomainStructures\Services\HydrationService;
 use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
 use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Strategies\TemporalPathStrategy;
-use AndyDefer\Logger\Configs\LoggerConfig;
 use AndyDefer\Logger\Contracts\LoggerConfigInterface;
 use AndyDefer\Logger\Contracts\LoggerInterface;
 use AndyDefer\Logger\LoggerService;

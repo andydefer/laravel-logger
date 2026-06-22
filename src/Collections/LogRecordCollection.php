@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Collections;
 
-use AndyDefer\Directive\Collections\AbstractItemCollection;
 use AndyDefer\DomainStructures\Abstracts\AbstractTypedCollection;
 use AndyDefer\Logger\Records\LogRecord;
 
@@ -31,15 +30,13 @@ final class LogRecordCollection extends AbstractTypedCollection
     public function toNormalizedArray(): array
     {
         return array_map(
-            fn(LogRecord $record) => $record->toArrayWithoutNulls(),
+            fn (LogRecord $record) => $record->toArrayWithoutNulls(),
             $this->toArray()
         );
     }
 
     /**
      * Gets all records as a JSON string.
-     *
-     * @return string
      */
     public function toJson(): string
     {
