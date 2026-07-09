@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6d721629ad33643fec267073353ad447",
+    "content-hash": "8849cb57ad02ed7b11b18f035c9bd81c",
     "packages": [
         {
             "name": "andydefer/domain-structures",
@@ -59,20 +59,20 @@
         },
         {
             "name": "andydefer/laravel-jsonl",
-            "version": "v0.7.2",
+            "version": "v0.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/laravel-jsonl.git",
-                "reference": "01f3e9673582d872d8968f75a3d4d6a99135c863"
+                "reference": "0ecf0163686f54d9ac5cad43074de4bc41857037"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/laravel-jsonl/zipball/01f3e9673582d872d8968f75a3d4d6a99135c863",
-                "reference": "01f3e9673582d872d8968f75a3d4d6a99135c863",
+                "url": "https://api.github.com/repos/andydefer/laravel-jsonl/zipball/0ecf0163686f54d9ac5cad43074de4bc41857037",
+                "reference": "0ecf0163686f54d9ac5cad43074de4bc41857037",
                 "shasum": ""
             },
             "require": {
-                "andydefer/php-services": "^1.3.0",
+                "andydefer/php-services": "^1.5",
                 "laravel/framework": "^12.0|^13.0|^14.0|^15.0",
                 "php": "^8.2"
             },
@@ -108,26 +108,26 @@
             "description": "JSONL storage service for Laravel - write, read, query, and clean JSON Lines files with custom path strategies",
             "support": {
                 "issues": "https://github.com/andydefer/laravel-jsonl/issues",
-                "source": "https://github.com/andydefer/laravel-jsonl/tree/v0.7.2"
+                "source": "https://github.com/andydefer/laravel-jsonl/tree/v0.8.0"
             },
-            "time": "2026-07-07T02:32:01+00:00"
+            "time": "2026-07-09T16:00:08+00:00"
         },
         {
             "name": "andydefer/php-services",
-            "version": "v1.3.1",
+            "version": "v1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/php-services.git",
-                "reference": "6d183fadf5b681e081385f712fb31466e288a8af"
+                "reference": "aacf68eff586b198971f3b2ece0d67d57640dc4a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/php-services/zipball/6d183fadf5b681e081385f712fb31466e288a8af",
-                "reference": "6d183fadf5b681e081385f712fb31466e288a8af",
+                "url": "https://api.github.com/repos/andydefer/php-services/zipball/aacf68eff586b198971f3b2ece0d67d57640dc4a",
+                "reference": "aacf68eff586b198971f3b2ece0d67d57640dc4a",
                 "shasum": ""
             },
             "require": {
-                "andydefer/php-vo": "^0.12.0",
+                "andydefer/php-vo": "^0.13.1",
                 "php": "^8.2"
             },
             "require-dev": {
@@ -158,22 +158,22 @@
             "description": "Collection of reusable services for PHP and Laravel applications including model transformation, caching, and common business logic",
             "support": {
                 "issues": "https://github.com/andydefer/php-services/issues",
-                "source": "https://github.com/andydefer/php-services/tree/v1.3.1"
+                "source": "https://github.com/andydefer/php-services/tree/v1.5.0"
             },
-            "time": "2026-07-07T02:33:29+00:00"
+            "time": "2026-07-09T14:54:30+00:00"
         },
         {
             "name": "andydefer/php-vo",
-            "version": "v0.12.1",
+            "version": "v0.13.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/andydefer/php-vo.git",
-                "reference": "4fff1f21780fe1124cfbba166c7c3ae9878e2b6e"
+                "reference": "782b40c101e3a978ba236b9642ec548100cd440b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/andydefer/php-vo/zipball/4fff1f21780fe1124cfbba166c7c3ae9878e2b6e",
-                "reference": "4fff1f21780fe1124cfbba166c7c3ae9878e2b6e",
+                "url": "https://api.github.com/repos/andydefer/php-vo/zipball/782b40c101e3a978ba236b9642ec548100cd440b",
+                "reference": "782b40c101e3a978ba236b9642ec548100cd440b",
                 "shasum": ""
             },
             "require": {
@@ -205,9 +205,9 @@
             "description": "A collection of reusable Value Objects and Enums for PHP applications (Email, Money, Address, PostalCode, Iso8601DateTime, Currency, etc.)",
             "support": {
                 "issues": "https://github.com/andydefer/php-vo/issues",
-                "source": "https://github.com/andydefer/php-vo/tree/v0.12.1"
+                "source": "https://github.com/andydefer/php-vo/tree/v0.13.1"
             },
-            "time": "2026-07-07T02:33:51+00:00"
+            "time": "2026-07-09T14:51:33+00:00"
         },
         {
             "name": "brick/math",
