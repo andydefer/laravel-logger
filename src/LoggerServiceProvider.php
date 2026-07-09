@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger;
 
-use AndyDefer\DomainStructures\Services\HydrationService;
 use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
 use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Strategies\TemporalPathStrategy;
@@ -20,7 +19,6 @@ final class LoggerServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerConfig();
-        $this->registerHydrationService();
         $this->registerJsonlDependencies();
         $this->registerLoggerService();
     }
@@ -30,11 +28,6 @@ final class LoggerServiceProvider extends ServiceProvider
         $this->app->singleton(LoggerConfigInterface::class, function ($app) {
             return new LoggerConfig($app->make(ConfigRepository::class));
         });
-    }
-
-    private function registerHydrationService(): void
-    {
-        $this->app->singleton(HydrationService::class);
     }
 
     private function registerJsonlDependencies(): void
@@ -65,7 +58,6 @@ final class LoggerServiceProvider extends ServiceProvider
         $this->app->singleton(LoggerService::class, function ($app) {
             return new LoggerService(
                 jsonlService: $app->make(JsonlService::class),
-                hydrationService: $app->make(HydrationService::class),
             );
         });
 

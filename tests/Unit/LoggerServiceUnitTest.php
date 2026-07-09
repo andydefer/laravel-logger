@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Unit;
 
-use AndyDefer\DomainStructures\Services\HydrationService;
 use AndyDefer\DomainStructures\Utils\StrictDataObject;
 use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Records\LogJsonlRecord;
@@ -24,8 +23,6 @@ final class LoggerServiceUnitTest extends UnitTestCase
 {
     private JsonlService&MockObject $jsonlService;
 
-    private HydrationService $hydrationService;
-
     private LoggerService $logger;
 
     protected function setUp(): void
@@ -33,8 +30,7 @@ final class LoggerServiceUnitTest extends UnitTestCase
         parent::setUp();
 
         $this->jsonlService = $this->createMock(JsonlService::class);
-        $this->hydrationService = new HydrationService;
-        $this->logger = new LoggerService($this->jsonlService, $this->hydrationService);
+        $this->logger = new LoggerService($this->jsonlService);
     }
 
     private function createLogDataRecord(string $type, array $payloadData): LogDataRecord

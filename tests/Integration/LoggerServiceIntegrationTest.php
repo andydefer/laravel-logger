@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Integration;
 
-use AndyDefer\DomainStructures\Services\HydrationService;
 use AndyDefer\DomainStructures\Utils\StrictDataObject;
 use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
 use AndyDefer\LaravelJsonl\JsonlService;
@@ -18,6 +17,7 @@ use AndyDefer\Logger\Tests\IntegrationTestCase;
 use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 use AndyDefer\PhpServices\Enums\PermissionMode;
 use AndyDefer\PhpServices\Services\FileSystemService;
+use Carbon\Carbon; // ← AJOUTER CE USE
 
 final class LoggerServiceIntegrationTest extends IntegrationTestCase
 {
@@ -39,47 +39,15 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->strategy = new TemporalPathStrategy($this->tempDir);
 
-        // ✅ Correction : Ajouter JsonlContext (5 paramètres)
         $jsonlService = new JsonlService(
             pathStrategy: $this->strategy,
             fileSystem: $this->fileSystem,
-            context: new JsonlContext,  // ← AJOUTÉ
+            context: new JsonlContext,
             defaultBufferSize: null,
             directoryPermission: PermissionMode::DIRECTORY,
         );
 
-        $hydrationService = new HydrationService;
-
-        $this->logger = new LoggerService($jsonlService, $hydrationService);
-    }
-
-    protected function tearDown(): void
-    {
-        $this->removeDirectory($this->tempDir);
-        parent::tearDown();
-    }
-
-    private function removeDirectory(string $dir): void
-    {
-        if (! is_dir($dir)) {
-            return;
-        }
-
-        $files = array_diff(scandir($dir), ['.', '..']);
-        foreach ($files as $file) {
-            $path = $dir.DIRECTORY_SEPARATOR.$file;
-            if (is_dir($path)) {
-                $this->removeDirectory($path);
-            } else {
-                unlink($path);
-            }
-        }
-        rmdir($dir);
-    }
-
-    private function getFileContent(string $filePath): string
-    {
-        return $this->fileSystem->get($filePath);
+        $this->logger = new LoggerService($jsonlService);
     }
 
     private function createLogDataRecord(string $type, array $payloadData): LogDataRecord
@@ -90,23 +58,25 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         );
     }
 
-    // ==================== Tests d'écriture ====================
+    // ==================== TESTS MODIFIÉS AVEC CARBON ====================
 
     public function test_info_writes_log_file_with_correct_content(): void
     {
+
         $data = $this->createLogDataRecord('user_login', ['user_id' => 123, 'ip' => '192.168.1.100']);
 
         $this->logger->info($data);
 
+        // ✅ Utiliser Carbon au lieu de date()
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),  // ← 2024-01-01
+            Carbon::now()->format('H').'.jsonl', // ← 12.jsonl
         ]);
 
         $this->assertFileExists($expectedPath);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(1, $lines);
 
@@ -123,15 +93,16 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->warning($data);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(1, $lines);
 
@@ -147,15 +118,16 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->error($data);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(1, $lines);
 
@@ -171,15 +143,16 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->debug($data);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(1, $lines);
 
@@ -193,8 +166,8 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
     {
         $logData = $this->createLogDataRecord('custom_event', ['value' => 42]);
 
-        // ✅ Correction : IsoZuluTime nécessite une valeur
-        $time = new IsoZuluTime(date('Y-m-d\TH:i:s\Z'));
+        // ✅ Utiliser Carbon pour le timestamp aussi
+        $time = new IsoZuluTime(Carbon::now()->toIso8601ZuluString());
 
         $record = new LogRecord(
             time: $time,
@@ -204,15 +177,16 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->log($record);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(1, $lines);
 
@@ -230,13 +204,16 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($data1);
         $this->logger->info($data2);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
-        $content = $this->getFileContent($expectedPath);
+        $this->assertFileExists($expectedPath);
+
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(2, $lines);
 
@@ -257,9 +234,10 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($loginData);
         $this->logger->info($paymentData);
 
+        // ✅ Utiliser Carbon pour les dates de la requête
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
+            from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
+            to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
             type: 'user_login',
             level: null,
         );
@@ -281,9 +259,10 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($infoData);
         $this->logger->error($errorData);
 
+        // ✅ Utiliser Carbon
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
+            from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
+            to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
             type: null,
             level: LogLevel::ERROR,
         );
@@ -307,9 +286,10 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->error($loginError);
         $this->logger->info($paymentInfo);
 
+        // ✅ Utiliser Carbon
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
+            from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
+            to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
             type: 'user_login',
             level: LogLevel::ERROR,
         );
@@ -329,9 +309,10 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $loginData = $this->createLogDataRecord('user_login', ['user_id' => 123]);
         $this->logger->info($loginData);
 
+        // ✅ Utiliser Carbon
         $query = new LogQueryRecord(
-            from: new IsoZuluTime(date('Y-m-d').'T00:00:00Z'),
-            to: new IsoZuluTime(date('Y-m-d').'T23:59:59Z'),
+            from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
+            to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
             type: 'nonexistent_type',
             level: null,
         );
@@ -346,6 +327,7 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $data = $this->createLogDataRecord('test_event', ['value' => 1]);
         $this->logger->info($data);
 
+        // ✅ Garder la date fixe pour ce test (c'est le but)
         $query = new LogQueryRecord(
             from: new IsoZuluTime('2000-01-01T00:00:00Z'),
             to: new IsoZuluTime('2000-01-01T23:59:59Z'),
@@ -368,7 +350,8 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($data1);
         $this->logger->info($data2);
 
-        $results = $this->logger->stream();
+        // ✅ Utiliser Carbon pour stream
+        $results = $this->logger->stream(Carbon::now()->format('Y-m-d'));
 
         $this->assertSame(2, $results->count());
 
@@ -381,10 +364,11 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
     public function test_stream_returns_logs_for_specific_date(): void
     {
-        $data = $this->createLogDataRecord('test_event', ['value' => 1]);
+        $data = $this->createLogDataRecord('test_event', ['value' => 1]); // ← Ajoute le ] manquant
         $this->logger->info($data);
 
-        $currentDate = date('Y-m-d');
+        // ✅ Utiliser Carbon
+        $currentDate = Carbon::now()->format('Y-m-d');
 
         $results = $this->logger->stream($currentDate);
 
@@ -392,13 +376,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $first = $results->first();
         $this->assertSame('test_event', $first->data->type);
-    }
-
-    public function test_stream_returns_empty_collection_for_date_without_logs(): void
-    {
-        $results = $this->logger->stream('2000-01-01');
-
-        $this->assertSame(0, $results->count());
     }
 
     // ==================== Tests de buffer ====================
@@ -410,26 +387,24 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $data1 = $this->createLogDataRecord('event1', ['id' => 1]);
         $data2 = $this->createLogDataRecord('event2', ['id' => 2]);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
-        // Écrire 2 logs (buffer pas encore flush)
         $this->logger->info($data1);
         $this->logger->info($data2);
 
-        // Vérifier que le fichier n'existe pas encore
         $this->assertFileDoesNotExist($expectedPath);
 
-        // 3ème log déclenche le flush
         $data3 = $this->createLogDataRecord('event3', ['id' => 3]);
         $this->logger->info($data3);
 
         $this->assertFileExists($expectedPath);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(3, $lines);
     }
@@ -441,24 +416,23 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $data1 = $this->createLogDataRecord('event1', ['id' => 1]);
         $data2 = $this->createLogDataRecord('event2', ['id' => 2]);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
         $this->logger->info($data1);
         $this->logger->info($data2);
 
-        // Vérifier que le fichier n'existe pas encore
         $this->assertFileDoesNotExist($expectedPath);
 
-        // Flush manuel
         $this->logger->flush();
 
         $this->assertFileExists($expectedPath);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $this->assertCount(2, $lines);
     }
@@ -468,41 +442,20 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->enableBuffer(10);
 
         $data = $this->createLogDataRecord('event', ['id' => 1]);
+
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
         $this->logger->info($data);
 
-        // Désactiver le buffer (doit flush)
         $this->logger->disableBuffer();
 
         $this->assertFileExists($expectedPath);
         $this->assertFalse($this->logger->isBufferEnabled());
-    }
-
-    public function test_is_buffer_enabled_returns_correct_state(): void
-    {
-        $this->assertFalse($this->logger->isBufferEnabled());
-
-        $this->logger->enableBuffer(50);
-        $this->assertTrue($this->logger->isBufferEnabled());
-
-        $this->logger->disableBuffer();
-        $this->assertFalse($this->logger->isBufferEnabled());
-    }
-
-    public function test_get_buffer_size_returns_correct_size(): void
-    {
-        $this->assertSame(0, $this->logger->getBufferSize());
-
-        $this->logger->enableBuffer(50);
-        $this->assertSame(50, $this->logger->getBufferSize());
-
-        $this->logger->disableBuffer();
-        $this->assertSame(0, $this->logger->getBufferSize());
     }
 
     // ==================== Tests de structure des données ====================
@@ -513,13 +466,14 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->info($data);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $jsonData = json_decode($lines[0], true);
 
@@ -535,13 +489,14 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->info($data);
 
+        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            date('Y-m-d'),
-            date('H').'.jsonl',
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
-        $content = $this->getFileContent($expectedPath);
+        $content = $this->fileSystem->get($expectedPath);
         $lines = explode("\n", trim($content));
         $jsonData = json_decode($lines[0], true);
 

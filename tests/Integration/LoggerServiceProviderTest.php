@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace AndyDefer\Logger\Tests\Integration;
 
-use AndyDefer\DomainStructures\Services\HydrationService;
 use AndyDefer\LaravelJsonl\Contexts\JsonlContext;
 use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Strategies\TemporalPathStrategy;
@@ -65,14 +64,6 @@ final class LoggerServiceProviderTest extends IntegrationTestCase
     {
         $first = $this->app->make(JsonlService::class);
         $second = $this->app->make(JsonlService::class);
-
-        $this->assertSame($first, $second);
-    }
-
-    public function test_hydration_service_is_registered_as_singleton(): void
-    {
-        $first = $this->app->make(HydrationService::class);
-        $second = $this->app->make(HydrationService::class);
 
         $this->assertSame($first, $second);
     }

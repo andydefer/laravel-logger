@@ -6,7 +6,6 @@ namespace AndyDefer\Logger;
 
 use AndyDefer\DomainStructures\Abstracts\AbstractRecord;
 use AndyDefer\DomainStructures\Abstracts\AbstractTypedCollection;
-use AndyDefer\DomainStructures\Services\HydrationService;
 use AndyDefer\DomainStructures\Utils\StrictDataObject;
 use AndyDefer\LaravelJsonl\JsonlService;
 use AndyDefer\LaravelJsonl\Records\LogJsonlRecord;
@@ -33,7 +32,6 @@ final class LoggerService implements LoggerInterface
 {
     public function __construct(
         private readonly JsonlService $jsonlService,
-        private readonly HydrationService $hydrationService,
     ) {}
 
     /**
@@ -89,7 +87,7 @@ final class LoggerService implements LoggerInterface
         );
 
         $files = $this->jsonlService->getFilesToScan($jsonlQuery);
-        $results = new LogRecordCollection(LogRecord::class);
+        $results = new LogRecordCollection;
 
         foreach ($files as $file) {
             if (! $this->jsonlService->fileExists($file)) {
@@ -114,7 +112,7 @@ final class LoggerService implements LoggerInterface
     public function stream(?string $date = null): AbstractTypedCollection
     {
         $targetDate = $date ?? date('Y-m-d');
-        $results = new LogRecordCollection(LogRecord::class);
+        $results = new LogRecordCollection;
         $basePath = $this->jsonlService->getBaseDirectory();
 
         for ($hour = 0; $hour <= 23; $hour++) {
@@ -251,21 +249,21 @@ final class LoggerService implements LoggerInterface
     }
 
     /**
-     * Hydrate a LogRecord from array data using HydrationService.
+     * Hydrate a LogRecord from array data.
      */
     private function hydrateToLogRecord(array $data): LogRecord
     {
         // ✅ Correction : Le payload est directement dans $data['payload']
-        $payloadObject = new StrictDataObject($data['payload'] ?? []);
+        $payloadObject = StrictDataObject::from($data['payload'] ?? []);
         $type = $data['type'];
 
-        $logData = $this->hydrationService->hydrate(LogDataRecord::class, [
+        $logData = LogDataRecord::from([
             'type' => $type,
             'payload' => $payloadObject,
         ]);
 
-        $time = $this->hydrationService->hydrate(IsoZuluTime::class, $data['time']);
-        $level = $this->hydrationService->hydrate(LogLevel::class, $data['level']);
+        $time = IsoZuluTime::from($data['time']);
+        $level = LogLevel::tryFrom($data['level']);
 
         return new LogRecord(
             time: $time,
