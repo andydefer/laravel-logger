@@ -19,7 +19,7 @@ use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 
 #[AllowMockObjectsWithoutExpectations]
-final class LoggerServiceUnitTest extends UnitTestCase
+final class LoggerServiceTest extends UnitTestCase
 {
     private JsonlService&MockObject $jsonlService;
 
@@ -40,8 +40,6 @@ final class LoggerServiceUnitTest extends UnitTestCase
             payload: new StrictDataObject($payloadData),
         );
     }
-
-    // ==================== Tests d'écriture ====================
 
     public function test_info_writes_log_with_correct_level(): void
     {
@@ -120,8 +118,6 @@ final class LoggerServiceUnitTest extends UnitTestCase
         $this->logger->log($record);
     }
 
-    // ==================== Tests de buffer ====================
-
     public function test_enable_buffer_calls_jsonl_service(): void
     {
         $this->jsonlService->expects($this->once())
@@ -169,8 +165,6 @@ final class LoggerServiceUnitTest extends UnitTestCase
         $this->assertSame(100, $result);
     }
 
-    // ==================== Tests de requêtage ====================
-
     public function test_query_returns_empty_collection_when_no_files(): void
     {
         $query = new LogQueryRecord(
@@ -183,9 +177,15 @@ final class LoggerServiceUnitTest extends UnitTestCase
         $this->jsonlService->expects($this->once())
             ->method('getFilesToScan')
             ->with($this->callback(function ($jsonlQuery) {
-                return $jsonlQuery instanceof TemporalLogQueryRecord
-                    && $jsonlQuery->from->getValue() === '2026-01-15T00:00:00+00:00'
-                    && $jsonlQuery->to->getValue() === '2026-01-15T23:59:59+00:00';
+                if (! $jsonlQuery instanceof TemporalLogQueryRecord) {
+                    return false;
+                }
+
+                // getValue() retourne 'Y-m-d H:i:s' en UTC
+                return $jsonlQuery->from->getValue() === '2026-01-15 00:00:00'
+                    && $jsonlQuery->to->getValue() === '2026-01-15 23:59:59'
+                    && $jsonlQuery->type === null
+                    && $jsonlQuery->level === null;
             }))
             ->willReturn([]);
 
@@ -299,8 +299,6 @@ final class LoggerServiceUnitTest extends UnitTestCase
         $this->assertSame(LogLevel::ERROR, $first->level);
     }
 
-    // ==================== Tests de streaming ====================
-
     public function test_stream_with_null_date_uses_current_date(): void
     {
         $this->jsonlService->expects($this->once())
@@ -359,8 +357,6 @@ final class LoggerServiceUnitTest extends UnitTestCase
         $this->assertInstanceOf(LogRecord::class, $first);
         $this->assertSame('test', $first->data->type);
     }
-
-    // ==================== Tests de correspondance de requête ====================
 
     public function test_matches_query_with_type_filter(): void
     {

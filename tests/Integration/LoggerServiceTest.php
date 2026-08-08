@@ -17,9 +17,9 @@ use AndyDefer\Logger\Tests\IntegrationTestCase;
 use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 use AndyDefer\PhpServices\Enums\PermissionMode;
 use AndyDefer\PhpServices\Services\FileSystemService;
-use Carbon\Carbon; // ← AJOUTER CE USE
+use Carbon\Carbon;
 
-final class LoggerServiceIntegrationTest extends IntegrationTestCase
+final class LoggerServiceTest extends IntegrationTestCase
 {
     private LoggerService $logger;
 
@@ -58,20 +58,16 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         );
     }
 
-    // ==================== TESTS MODIFIÉS AVEC CARBON ====================
-
     public function test_info_writes_log_file_with_correct_content(): void
     {
-
         $data = $this->createLogDataRecord('user_login', ['user_id' => 123, 'ip' => '192.168.1.100']);
 
         $this->logger->info($data);
 
-        // ✅ Utiliser Carbon au lieu de date()
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
-            Carbon::now()->format('Y-m-d'),  // ← 2024-01-01
-            Carbon::now()->format('H').'.jsonl', // ← 12.jsonl
+            Carbon::now()->format('Y-m-d'),
+            Carbon::now()->format('H').'.jsonl',
         ]);
 
         $this->assertFileExists($expectedPath);
@@ -93,7 +89,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->warning($data);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -118,7 +113,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->error($data);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -143,7 +137,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->debug($data);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -166,7 +159,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
     {
         $logData = $this->createLogDataRecord('custom_event', ['value' => 42]);
 
-        // ✅ Utiliser Carbon pour le timestamp aussi
         $time = new IsoZuluTime(Carbon::now()->toIso8601ZuluString());
 
         $record = new LogRecord(
@@ -177,7 +169,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->log($record);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -204,7 +195,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($data1);
         $this->logger->info($data2);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -224,8 +214,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->assertSame('event2', $jsonData2['type']);
     }
 
-    // ==================== Tests de requêtage ====================
-
     public function test_query_returns_matching_logs(): void
     {
         $loginData = $this->createLogDataRecord('user_login', ['user_id' => 123]);
@@ -234,7 +222,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($loginData);
         $this->logger->info($paymentData);
 
-        // ✅ Utiliser Carbon pour les dates de la requête
         $query = new LogQueryRecord(
             from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
             to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
@@ -259,7 +246,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($infoData);
         $this->logger->error($errorData);
 
-        // ✅ Utiliser Carbon
         $query = new LogQueryRecord(
             from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
             to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
@@ -286,7 +272,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->error($loginError);
         $this->logger->info($paymentInfo);
 
-        // ✅ Utiliser Carbon
         $query = new LogQueryRecord(
             from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
             to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
@@ -309,7 +294,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $loginData = $this->createLogDataRecord('user_login', ['user_id' => 123]);
         $this->logger->info($loginData);
 
-        // ✅ Utiliser Carbon
         $query = new LogQueryRecord(
             from: new IsoZuluTime(Carbon::now()->startOfDay()->toIso8601ZuluString()),
             to: new IsoZuluTime(Carbon::now()->endOfDay()->toIso8601ZuluString()),
@@ -327,7 +311,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $data = $this->createLogDataRecord('test_event', ['value' => 1]);
         $this->logger->info($data);
 
-        // ✅ Garder la date fixe pour ce test (c'est le but)
         $query = new LogQueryRecord(
             from: new IsoZuluTime('2000-01-01T00:00:00Z'),
             to: new IsoZuluTime('2000-01-01T23:59:59Z'),
@@ -340,8 +323,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->assertSame(0, $results->count());
     }
 
-    // ==================== Tests de streaming ====================
-
     public function test_stream_returns_all_logs_for_today(): void
     {
         $data1 = $this->createLogDataRecord('event1', ['id' => 1]);
@@ -350,7 +331,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->logger->info($data1);
         $this->logger->info($data2);
 
-        // ✅ Utiliser Carbon pour stream
         $results = $this->logger->stream(Carbon::now()->format('Y-m-d'));
 
         $this->assertSame(2, $results->count());
@@ -364,10 +344,9 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
     public function test_stream_returns_logs_for_specific_date(): void
     {
-        $data = $this->createLogDataRecord('test_event', ['value' => 1]); // ← Ajoute le ] manquant
+        $data = $this->createLogDataRecord('test_event', ['value' => 1]);
         $this->logger->info($data);
 
-        // ✅ Utiliser Carbon
         $currentDate = Carbon::now()->format('Y-m-d');
 
         $results = $this->logger->stream($currentDate);
@@ -378,8 +357,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->assertSame('test_event', $first->data->type);
     }
 
-    // ==================== Tests de buffer ====================
-
     public function test_buffer_writes_after_reaching_size(): void
     {
         $this->logger->enableBuffer(3);
@@ -387,7 +364,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $data1 = $this->createLogDataRecord('event1', ['id' => 1]);
         $data2 = $this->createLogDataRecord('event2', ['id' => 2]);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -416,7 +392,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $data1 = $this->createLogDataRecord('event1', ['id' => 1]);
         $data2 = $this->createLogDataRecord('event2', ['id' => 2]);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -443,7 +418,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $data = $this->createLogDataRecord('event', ['id' => 1]);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -458,15 +432,12 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->assertFalse($this->logger->isBufferEnabled());
     }
 
-    // ==================== Tests de structure des données ====================
-
     public function test_log_record_contains_timestamp(): void
     {
         $data = $this->createLogDataRecord('test', ['value' => 1]);
 
         $this->logger->info($data);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
@@ -480,7 +451,9 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
         $this->assertArrayHasKey('time', $jsonData);
 
         $timestamp = $jsonData['time'];
-        $this->assertMatchesRegularExpression('/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00/', $timestamp);
+
+        // Format: Y-m-d H:i:s (ex: 2024-01-01 12:00:00)
+        $this->assertMatchesRegularExpression('/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $timestamp);
     }
 
     public function test_log_data_record_has_type_and_payload(): void
@@ -489,7 +462,6 @@ final class LoggerServiceIntegrationTest extends IntegrationTestCase
 
         $this->logger->info($data);
 
-        // ✅ Utiliser Carbon
         $expectedPath = implode(DIRECTORY_SEPARATOR, [
             $this->tempDir,
             Carbon::now()->format('Y-m-d'),
