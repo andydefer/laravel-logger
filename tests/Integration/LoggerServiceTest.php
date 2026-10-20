@@ -18,7 +18,9 @@ use AndyDefer\Logger\ValueObjects\IsoZuluTime;
 use AndyDefer\PhpServices\Enums\PermissionMode;
 use AndyDefer\PhpServices\Services\FileSystemService;
 use Carbon\Carbon;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 
+#[AllowMockObjectsWithoutExpectations]
 final class LoggerServiceTest extends IntegrationTestCase
 {
     private LoggerService $logger;
@@ -477,5 +479,186 @@ final class LoggerServiceTest extends IntegrationTestCase
         $this->assertSame('api_call', $jsonData['type']);
         $this->assertSame('/users', $jsonData['payload']['endpoint']);
         $this->assertSame('GET', $jsonData['payload']['method']);
+    }
+
+    // ============================================================
+    // Safe behaviour — the logger must NEVER break the app
+    // ============================================================
+
+    /**
+     * Creates a LoggerService backed by a JsonlService mock that throws
+     * on every write operation.
+     */
+    private function createFailingLogger(): LoggerService
+    {
+        $failingJsonl = $this->createMock(JsonlService::class);
+
+        $failingJsonl->method('isBufferEnabled')->willReturn(false);
+        $failingJsonl->method('write')->willThrowException(
+            new \RuntimeException('Disk full'),
+        );
+        $failingJsonl->method('writeBuffered')->willThrowException(
+            new \RuntimeException('Disk full'),
+        );
+        $failingJsonl->method('flushBuffer')->willThrowException(
+            new \RuntimeException('Disk full'),
+        );
+        $failingJsonl->method('enableBuffer')->willThrowException(
+            new \RuntimeException('Cannot enable buffer'),
+        );
+        $failingJsonl->method('disableBuffer')->willThrowException(
+            new \RuntimeException('Cannot disable buffer'),
+        );
+        $failingJsonl->method('getBufferSize')->willThrowException(
+            new \RuntimeException('Cannot read buffer size'),
+        );
+
+        return new LoggerService($failingJsonl);
+    }
+
+    public function test_info_does_not_throw_when_jsonl_write_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+        $data = $this->createLogDataRecord('test', ['value' => 1]);
+
+        // Act — must not throw
+        $logger->info($data);
+
+        // Assert — the logger swallowed the failure
+        $this->assertTrue(true);
+    }
+
+    public function test_warning_does_not_throw_when_jsonl_write_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+        $data = $this->createLogDataRecord('test', ['value' => 1]);
+
+        $logger->warning($data);
+
+        $this->assertTrue(true);
+    }
+
+    public function test_error_does_not_throw_when_jsonl_write_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+        $data = $this->createLogDataRecord('test', ['value' => 1]);
+
+        $logger->error($data);
+
+        $this->assertTrue(true);
+    }
+
+    public function test_debug_does_not_throw_when_jsonl_write_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+        $data = $this->createLogDataRecord('test', ['value' => 1]);
+
+        $logger->debug($data);
+
+        $this->assertTrue(true);
+    }
+
+    public function test_log_does_not_throw_when_jsonl_write_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+        $data = $this->createLogDataRecord('test', ['value' => 1]);
+        $record = new LogRecord(
+            time: new IsoZuluTime(Carbon::now()->toIso8601ZuluString()),
+            level: LogLevel::INFO,
+            data: $data,
+        );
+
+        $logger->log($record);
+
+        $this->assertTrue(true);
+    }
+
+    public function test_query_returns_empty_collection_when_jsonl_fails(): void
+    {
+        $failingJsonl = $this->createMock(JsonlService::class);
+        $failingJsonl->method('getFilesToScan')->willThrowException(
+            new \RuntimeException('Cannot scan files'),
+        );
+
+        $logger = new LoggerService($failingJsonl);
+
+        $query = new LogQueryRecord(
+            from: new IsoZuluTime('2026-01-01T00:00:00Z'),
+            to: new IsoZuluTime('2026-01-01T23:59:59Z'),
+            type: null,
+            level: null,
+        );
+
+        $result = $logger->query($query);
+
+        $this->assertSame(0, $result->count());
+    }
+
+    public function test_stream_returns_empty_collection_when_jsonl_fails(): void
+    {
+        $failingJsonl = $this->createMock(JsonlService::class);
+        $failingJsonl->method('getBaseDirectory')->willThrowException(
+            new \RuntimeException('Cannot read base directory'),
+        );
+
+        $logger = new LoggerService($failingJsonl);
+
+        $result = $logger->stream('2026-01-01');
+
+        $this->assertSame(0, $result->count());
+    }
+
+    public function test_enable_buffer_does_not_throw_when_jsonl_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+
+        $result = $logger->enableBuffer(100);
+
+        $this->assertSame($logger, $result);
+    }
+
+    public function test_disable_buffer_does_not_throw_when_jsonl_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+
+        $result = $logger->disableBuffer();
+
+        $this->assertSame($logger, $result);
+    }
+
+    public function test_flush_does_not_throw_when_jsonl_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+
+        $logger->flush();
+
+        $this->assertTrue(true);
+    }
+
+    public function test_is_buffer_enabled_returns_false_when_jsonl_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+
+        $this->assertFalse($logger->isBufferEnabled());
+    }
+
+    public function test_get_buffer_size_returns_zero_when_jsonl_fails(): void
+    {
+        $logger = $this->createFailingLogger();
+
+        $this->assertSame(0, $logger->getBufferSize());
+    }
+
+    public function test_logger_never_throws_even_when_jsonl_fails_on_repeated_calls(): void
+    {
+        $logger = $this->createFailingLogger();
+        $data = $this->createLogDataRecord('test', ['value' => 1]);
+
+        // 100 calls in a row — none must throw.
+        for ($i = 0; $i < 100; $i++) {
+            $logger->info($data);
+        }
+
+        $this->assertTrue(true);
     }
 }
